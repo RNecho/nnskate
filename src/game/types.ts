@@ -1,0 +1,46 @@
+export type CharacterState = 'IDLE' | 'PUSH' | 'ROLL' | 'JUMP' | 'FALL' | 'LAND';
+export type GameSound = 'jump' | 'land' | 'push';
+
+export interface PhysicsConfig {
+  gravity: number;
+  maxSpeed: number;
+  acceleration: number;
+  deceleration: number;
+  braking: number;
+  jumpForce: number;
+  airControl: number;
+  coyoteTime: number;
+  jumpBuffer: number;
+  fallMultiplier: number;
+}
+
+export interface InputFrame {
+  axis: -1 | 0 | 1;
+  jumpPressed: boolean;
+  jumpHeld: boolean;
+}
+
+/** Feet/board position in world pixels. Positive y points down. */
+export interface CharacterSnapshot {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  facing: -1 | 1;
+  grounded: boolean;
+  state: CharacterState;
+  stateTime: number;
+  groundAngle: number;
+}
+
+export interface GroundPoint { x: number; y: number }
+export interface Platform { x: number; y: number; width: number }
+export interface LevelData {
+  width: number;
+  height: number;
+  spawn: GroundPoint;
+  ground: GroundPoint[];
+  platforms: Platform[];
+}
+
+export interface CameraSnapshot { x: number; y: number; width: number; height: number }
