@@ -33,8 +33,8 @@ button .icon { flex: none; }
 [hidden] { display: none !important; }
 .icon { vertical-align: middle; }
 .pixel-star { width: 24px; height: 24px; }
-.site-header, main, .site-footer { width: min(1240px, calc(100% - 96px)); margin-inline: auto; }
-.site-header { height: 112px; display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--line); }
+.site-header, main, .site-footer { width: min(1680px, calc(100% - 40px)); margin-inline: auto; }
+.site-header { height: 78px; display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--line); }
 .brand { display: inline-flex; gap: 13px; align-items: center; text-decoration: none; flex: none; }
 .skate-logo { width: 50px; height: 50px; color: var(--purple); }
 .brand-type { font-family: 'Fredoka', sans-serif; font-size: 27px; font-weight: 500; letter-spacing: -.7px; line-height: 1; }
@@ -45,8 +45,8 @@ button .icon { flex: none; }
 .version { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); padding: 8px 11px; border-radius: 7px; font-size: 11px; white-space: nowrap; }
 .status-dot { display: inline-block; width: 6px; height: 6px; background: var(--green); border-radius: 50%; flex-shrink: 0; }
 .version-number { color: var(--muted); padding-left: 7px; margin-left: 1px; border-left: 1px solid var(--line); }
-.play-section { padding-top: 35px; }
-.section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 26px; }
+.play-section { padding-top: 22px; }
+.section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 18px; }
 .eyebrow { font-size: 9px; font-weight: 700; letter-spacing: 2px; color: var(--muted); margin-bottom: 8px; }
 h1 { font-family: 'Fredoka', sans-serif; font-size: 42px; font-weight: 500; line-height: 1.14; letter-spacing: -.9px; margin: 0; display: flex; align-items: center; gap: 10px; }
 h1 > span { color: var(--purple); }
@@ -81,7 +81,7 @@ h1 .pixel-star { width: 24px; height: 24px; color: oklch(76% .123 75); margin: 0
 .tool-button:hover { background: var(--mint); border-color: var(--line); }
 .tool-button[aria-pressed="true"] { background: var(--lavender); color: var(--purple); }
 .canvas-wrap { position: relative; isolation: isolate; }
-#game { display: block; width: 100%; aspect-ratio: 2 / 1; background: oklch(67% .19 244); image-rendering: auto; touch-action: none; }
+#game { display: block; width: 100%; aspect-ratio: 16 / 9; background: oklch(82% .065 205); image-rendering: auto; touch-action: none; }
 #game:focus-visible { outline-offset: -4px; }
 .character-hud { position: absolute; z-index: 4; top: 18px; left: 21px; display: flex; align-items: center; gap: 10px; min-height: 44px; text-align: left; background: oklch(98% .027 100 / .94); padding: 7px 12px 7px 7px; border: 2px solid oklch(35% .105 298); border-radius: 3px; box-shadow: 3px 3px 0 oklch(26% .08 290 / .28); }
 .character-hud:hover:not(:disabled), .character-hud:focus-visible { background: var(--lavender); }
@@ -93,6 +93,60 @@ h1 .pixel-star { width: 24px; height: 24px; color: oklch(76% .123 75); margin: 0
 .practice-tag .status-dot { width: 5px; height: 5px; }
 .start-hint { position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 13px; padding: 10px 17px; background: oklch(98% .019 105 / .96); border: 1px solid oklch(58% .04 161); box-shadow: 3px 3px 0 oklch(34% .05 154 / .16); color: var(--ink); font-size: 11px; font-weight: 500; white-space: nowrap; pointer-events: none; transition: opacity 200ms ease-out; }
 .start-hint.has-started { opacity: 0; }
+.adventure-route { list-style: none; display: flex; gap: 12px; margin: 0 0 18px; padding: 0; }
+.adventure-route li { flex: 1; display: flex; align-items: center; gap: 8px; padding-block: 10px; font-size: 11px; color: var(--muted); border-bottom: 2px solid var(--line); }
+.adventure-route li > span { font-weight: 700; font-variant-numeric: tabular-nums; }
+.adventure-route [aria-current] { color: var(--purple); border-color: var(--purple); font-weight: 700; }
+.adventure-route .complete { color: var(--green); border-color: var(--green); }
+.mission-strip { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; padding: 12px 20px; color: var(--ink); background: var(--surface); border-bottom: 1px solid var(--line); font-size: 12px; }
+.mission-strip { align-items: center; }
+.mission-vitals { display: flex; align-items: center; gap: 16px; }
+.mission-vitals > span { color: var(--muted); font-size: 10px; }
+.health-hud { display: flex; gap: 5px; flex: none; }
+.health-hud svg { fill: oklch(61% .2 16); stroke: oklch(40% .12 10); stroke-width: 1; }
+.health-hud svg.empty { fill: transparent; stroke: oklch(62% .04 10); stroke-dasharray: 2 1; }
+.challenge-hud { position: absolute; top: 78px; left: 21px; display: grid; gap: 5px; padding: 8px 10px; border-radius: 5px; background: var(--paper); color: var(--purple); font-size: 11px; pointer-events: none; }
+@media (max-width: 480px) {
+  .challenge-hud { top: auto; bottom: 86px; left: 12px; padding: 5px 7px; gap: 3px; font-size: 9px; }
+}
+.power-hud { position: absolute; right: 18px; top: 18px; display: grid; justify-items: end; gap: 6px; max-width: 45%; pointer-events: none; }
+.power-hud strong, .power-hud > span { background: var(--paper); border: 1px solid var(--purple); padding: 8px 10px; color: var(--purple); font-size: 11px; border-radius: 3px; }
+.power-hud > span { color: var(--ink); font-weight: 700; }
+.power-hud #super-label { color: #71451d; background: #fff0ae; border-color: #b47b31; box-shadow: 0 0 15px #ffe7a366; }
+.story-panel { position: absolute; z-index: 2; left: 50%; bottom: 18px; transform: translateX(-50%); width: min(440px, calc(100% - 36px)); background: var(--paper); border: 2px solid var(--purple); border-radius: 8px; padding: 18px 22px; box-shadow: 4px 4px 0 oklch(30% .08 295 / .25); text-align: center; }
+.story-kicker { color: var(--purple); font-size: 9px; letter-spacing: 1.4px; font-weight: 700; }
+.story-panel h2 { font: 500 28px 'Fredoka', sans-serif; margin: 7px 0; }
+.story-panel p { font-size: 12px; line-height: 1.5; margin: 0 0 12px; }
+.story-panel small { display: block; font-size: 10px; color: var(--muted); margin-top: 8px; }
+.story-panel .primary-button { background: var(--purple); color: var(--paper); border-color: var(--purple); margin-inline: auto; }
+.story-panel .primary-button:hover { background: var(--ink); }
+.adventure-message { min-height: 42px; display: flex; align-items: center; padding: 10px 20px; font-size: 11px; line-height: 1.5; background: var(--lavender); color: var(--purple); }
+@media (max-width: 760px) {
+  .adventure-route { gap: 8px; }
+  .adventure-route li { font-size: 10px; align-items: flex-start; }
+  .mission-strip { padding: 10px 14px; font-size: 11px; }
+  .power-hud { right: 12px; top: 12px; gap: 4px; }
+  .power-hud strong, .power-hud > span { font-size: 9px; padding: 6px; }
+  .story-panel { padding: 12px 14px; bottom: 12px; }
+  .story-panel h2 { font-size: 23px; }
+  .story-panel p { font-size: 11px; margin-bottom: 8px; }
+}
+@media (max-width: 480px) {
+  .adventure-route { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 12px; }
+  .adventure-route li { padding-block: 6px; }
+  .section-heading h1 { font-size: 28px; flex-wrap: wrap; gap: 4px 7px; }
+  .section-heading h1 .pixel-star { display: none; }
+  .character-option small { font-size: 8px; }
+  .story-panel { top: 68px; bottom: auto; padding: 10px 12px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; text-align: left; }
+  .story-panel h2 { font-size: 19px; margin: 0; }
+  .story-panel .story-kicker { display: none; }
+  .story-panel small { display: none; }
+  .story-panel .primary-button { grid-column: 2; grid-row: 1; padding: 10px; min-height: 44px; font-size: 11px; }
+  #intro-panel p { display: none; }
+  .victory-panel p { grid-column: 1 / -1; grid-row: 2; margin: 0; }
+  .adventure-message { font-size: 10px; padding-inline: 14px; }
+  .power-hud { max-width: calc(100% - 180px); }
+}
 .hint-keys { font-family: sans-serif; font-size: 19px; letter-spacing: 2px; color: var(--purple); }
 .pause-overlay { position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; background: oklch(23% .05 171 / .62); }
 .pause-content { display: grid; justify-items: center; gap: 13px; padding: 32px; color: var(--paper); text-align: center; }
@@ -189,14 +243,14 @@ input[type="range"] { display: block; width: 100%; height: 25px; margin: 5px 0 0
 .game-shell:fullscreen { width: 100%; height: 100%; border: 0; border-radius: 0; display: flex; flex-direction: column; }
 .game-shell:fullscreen .canvas-wrap { min-height: 0; flex: 1; }
 .game-shell:fullscreen #game { width: 100%; height: 100%; }
-.game-shell:fullscreen .game-topbar, .game-shell:fullscreen .game-statusbar { flex-shrink: 0; }
+.game-shell:fullscreen .game-topbar, .game-shell:fullscreen .game-statusbar,
+.game-shell:fullscreen .mission-strip, .game-shell:fullscreen .adventure-message { flex-shrink: 0; }
 
 @media (min-width: 1500px) {
-  .site-header, main, .site-footer { width: min(1340px, calc(100% - 160px)); }
-  .play-section { padding-top: 39px; }
+  .site-header, main, .site-footer { width: min(1680px, calc(100% - 64px)); }
 }
 @media (max-width: 1100px) {
-  .site-header, main, .site-footer { width: calc(100% - 64px); }
+  .site-header, main, .site-footer { width: calc(100% - 32px); }
   .header-note { display: none; }
   .controls-strip { gap: 21px; }
   .controls-title { padding-right: 0; font-size: 16px; }
@@ -208,7 +262,7 @@ input[type="range"] { display: block; width: 100%; height: 25px; margin: 5px 0 0
   .character-picker { flex-wrap: wrap; gap: 11px 20px; }
   .picker-label { width: 100%; font-size: 14px; }
   .picker-shortcuts { font-size: 9px; margin-left: 0; }
-  .site-header, main, .site-footer { width: calc(100% - 36px); }
+  .site-header, main, .site-footer { width: calc(100% - 20px); }
   .site-header { height: 92px; gap: 16px; }
   .brand-type { font-size: 24px; }
   .brand-subtitle { font-size: 8px; letter-spacing: 3.1px; }

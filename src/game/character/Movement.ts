@@ -1,5 +1,5 @@
-import { groundAt } from '../level/Level';
-import type { CharacterSnapshot, InputFrame, LevelData, PhysicsConfig, Platform } from '../types';
+import { gapAt, groundAt, groundSegments } from '../level/Level';
+import type { CharacterSnapshot, Equipment, GroundPoint, InputFrame, LevelData, PhysicsConfig, Platform } from '../types';
 
 type MotionBody = Pick<CharacterSnapshot, 'x' | 'y' | 'vx' | 'vy' | 'facing' | 'grounded' | 'groundAngle'>;
 type Surface = { kind: 'terrain' } | { kind: 'platform'; platform: Platform };
@@ -19,22 +19,27 @@ export class Movement {
   private support: Surface | null = null;
   private coyoteRemaining = 0;
   private bufferRemaining = 0;
+  equipment?: Equipment;
+  private airJumpUsed = false;
+  get usedDoubleJump() { return this.airJumpUsed; }
+  private forcedRise = 0;
+  private readonly terrain: ReturnType<typeof groundSegments>;
 
   constructor(
     private readonly level: LevelData,
     private readonly config: PhysicsConfig,
     readonly body: MotionBody,
   ) {
+    this.terrain = groundSegments(level);
     this.reset();
   }
 
-  reset(): void {
-    const { spawn } = this.level;
+  reset(spawn: GroundPoint = this.level.spawn): void {
     const ground = groundAt(this.level, spawn.x);
     const platform = this.level.platforms.find((p) =>
       spawn.x >= p.x && spawn.x <= p.x + p.width && Math.abs(spawn.y - p.y) < 1,
     );
-    const grounded = Boolean(platform) || spawn.y >= ground.y - EPSILON;
+    const grounded = Boolean(platform) || !gapAt(this.level, spawn.x) && spawn.y >= ground.y - EPSILON;
     this.support = platform ? { kind: 'platform', platform } : grounded ? { kind: 'terrain' } : null;
     Object.assign(this.body, {
       x: spawn.x, y: platform?.y ?? (grounded ? ground.y : spawn.y),
@@ -43,23 +48,42 @@ export class Movement {
     });
     this.coyoteRemaining = grounded ? this.config.coyoteTime : 0;
     this.bufferRemaining = 0;
+    this.airJumpUsed = false;
+    this.forcedRise = 0;
+  }
+
+  launch(force: number): void {
+    this.body.vy = -force;
+    this.body.grounded = false;
+    this.support = null;
+    this.coyoteRemaining = 0;
+    this.bufferRemaining = 0;
+    this.forcedRise = 0.22;
   }
 
   step(dt: number, input: InputFrame): MovementEvents {
     const body = this.body;
     const events: MovementEvents = { jumped: false, landed: false };
+    this.forcedRise = Math.max(0, this.forcedRise - dt);
+    if (body.grounded) this.airJumpUsed = false;
     let departedPlatform: Platform | undefined;
     if (input.jumpPressed) this.bufferRemaining = this.config.jumpBuffer;
     if (body.grounded) this.coyoteRemaining = this.config.coyoteTime;
 
     if ((input.jumpPressed || this.bufferRemaining > 0) && (body.grounded || this.coyoteRemaining > 0)) {
       this.jump(events);
+    } else if (input.jumpPressed && this.equipment === 'patins' && !this.airJumpUsed) {
+      this.jump(events);
+      this.airJumpUsed = true;
     }
 
     const previousX = body.x;
     const previousY = body.y;
     const previousVx = body.vx;
-    const maxSpeed = Math.max(0, this.config.maxSpeed);
+    const speedFactor = this.equipment === 'foot' ? 0.75 : this.equipment === 'skate' ? 1.4 : 1;
+    const ramp = this.level.skateRamp;
+    const onSpeedRun = this.equipment === 'skate' && ramp && body.x >= ramp.from && body.x < ramp.landing + 60;
+    const maxSpeed = Math.max(0, onSpeedRun ? ramp.maxSpeed : this.config.maxSpeed * speedFactor);
     if (input.axis !== 0) {
       const reversing = body.vx * input.axis < 0;
       const acceleration = reversing ? this.config.braking : this.config.acceleration;
@@ -67,6 +91,9 @@ export class Movement {
       body.vx = approach(body.vx, input.axis * maxSpeed, Math.max(0, acceleration * control) * dt);
     } else if (body.grounded) {
       body.vx = approach(body.vx, 0, Math.max(0, this.config.deceleration) * dt);
+    }
+    if (onSpeedRun && body.grounded && this.support?.kind === 'terrain' && body.groundAngle > 0 && input.axis >= 0) {
+      body.vx += Math.sin(body.groundAngle) * this.config.gravity * 0.65 * dt;
     }
     body.vx = Math.max(-maxSpeed, Math.min(maxSpeed, body.vx));
     const nextX = previousX + (previousVx + body.vx) * 0.5 * dt;
@@ -76,9 +103,14 @@ export class Movement {
 
     if (body.grounded && this.support) {
       if (this.support.kind === 'terrain') {
-        const ground = groundAt(this.level, body.x);
-        body.y = ground.y;
-        body.groundAngle = ground.angle;
+        if (gapAt(this.level, body.x)) {
+          body.grounded = false;
+          this.support = null;
+        } else {
+          const ground = groundAt(this.level, body.x);
+          body.y = ground.y;
+          body.groundAngle = ground.angle;
+        }
       } else if (this.onPlatform(body.x, this.support.platform)) {
         body.y = this.support.platform.y;
         body.groundAngle = 0;
@@ -91,7 +123,7 @@ export class Movement {
 
     if (!body.grounded) {
       // Releasing the button cuts only the rising part of a jump.
-      if (!input.jumpHeld && body.vy < -this.config.jumpForce * RELEASE_JUMP_RATIO) {
+      if (!input.jumpHeld && this.forcedRise === 0 && body.vy < -this.config.jumpForce * RELEASE_JUMP_RATIO) {
         body.vy = -this.config.jumpForce * RELEASE_JUMP_RATIO;
       }
       const gravity = Math.max(0, this.config.gravity) * (body.vy >= 0 ? this.config.fallMultiplier : 1);
@@ -133,7 +165,11 @@ export class Movement {
   }
 
   private jump(events: MovementEvents): void {
-    this.body.vy = -Math.max(0, this.config.jumpForce);
+    const ramp = this.level.skateRamp;
+    const rampJump = ramp && this.equipment === 'skate' && this.body.vx >= ramp.minSpeed
+      && this.body.x >= ramp.lip - 110 && this.body.x <= ramp.lip + 12 && (this.body.grounded || this.coyoteRemaining > 0);
+    this.body.vy = -Math.max(0, rampJump ? ramp.jumpForce : this.config.jumpForce);
+    if (rampJump) this.forcedRise = 0.65;
     this.body.grounded = false;
     this.support = null;
     this.coyoteRemaining = 0;
@@ -156,15 +192,14 @@ export class Movement {
       }
     };
 
-    for (let i = 0; i < this.level.ground.length - 1; i++) {
-      const a = this.level.ground[i];
-      const b = this.level.ground[i + 1];
+    for (const { a, b } of this.terrain) {
       if (b.x < Math.min(x0, x1) || a.x > Math.max(x0, x1)) continue;
       const slope = (b.y - a.y) / (b.x - a.x);
       const relativeDescent = dy - slope * dx;
       if (relativeDescent <= EPSILON) continue;
       const time = (a.y + slope * (x0 - a.x) - y0) / relativeDescent;
       const hitX = x0 + dx * time;
+      if (gapAt(this.level, hitX) || time <= EPSILON && gapAt(this.level, x1)) continue;
       if (hitX >= a.x - EPSILON && hitX <= b.x + EPSILON) consider(time, { kind: 'terrain' });
     }
 

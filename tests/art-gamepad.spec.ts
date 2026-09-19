@@ -37,11 +37,11 @@ test('gamepad controls move, jump, pause and resume once per press; unplugging r
   }, { axis, jump, pause, connected });
   const state = () => page.evaluate(() => (window as unknown as { __SKATE__: { paused: boolean; character: { x: number; vx: number; state: string; grounded: boolean } } }).__SKATE__);
   await update(1);
-  await expect.poll(async () => (await state()).character.vx).toBe(280);
+  await expect.poll(async () => (await state()).character.vx).toBe(210);
   await expect(page.locator('#audio-status')).toHaveText('Clique no som para ativar a música');
   // One pointer gesture activates sound; it must not accidentally mute it.
   await page.locator('#sound-button').click();
-  await expect(page.locator('#audio-status')).toHaveText('Tocando: Sonhinho sobre rodas');
+  await expect(page.locator('#audio-status')).toHaveText('Tocando: Patinhas ao vento');
   await update(1, true);
   await expect.poll(async () => (await state()).character.state, { intervals: [16] }).toBe('JUMP');
   await update(0, false);

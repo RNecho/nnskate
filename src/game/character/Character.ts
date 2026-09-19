@@ -1,10 +1,11 @@
 import { FIXED_STEP } from '../config';
-import type { CharacterSnapshot, CharacterState, GameSound, InputFrame, LevelData, PhysicsConfig } from '../types';
+import type { CharacterSnapshot, CharacterState, Equipment, GameSound, GroundPoint, InputFrame, LevelData, PhysicsConfig } from '../types';
 import { Movement } from './Movement';
 
 const PUSH_DURATION = 0.3;
 const LAND_DURATION = 0.12;
 const IDLE_SPEED = 0.5;
+export const TRICK_DURATION = 0.48;
 
 /** Owns animation states; Movement owns all motion and surface collision. */
 export class Character {
@@ -13,6 +14,9 @@ export class Character {
     grounded: true, state: 'IDLE', stateTime: 0, groundAngle: 0,
   };
   private readonly movement: Movement;
+  private trickTapWindow = 0;
+  private trickUsed = false;
+  get usedDoubleJump() { return this.movement.usedDoubleJump; }
 
   constructor(
     private readonly level: LevelData,
@@ -33,20 +37,46 @@ export class Character {
       remaining -= step;
       firstStep = false;
     }
-    if (this.snapshot.y > this.level.height + 160) this.reset();
+    // Adventure owns fall damage and checkpoint recovery; motion never teleports.
   }
 
-  reset(): void {
-    this.movement.reset();
+  reset(spawn?: GroundPoint): void {
+    this.movement.reset(spawn);
     this.snapshot.state = 'IDLE';
     this.snapshot.stateTime = 0;
+    this.snapshot.stride = 0; this.snapshot.trickTime = 0; this.snapshot.tricks = 0;
+    this.trickTapWindow = 0; this.trickUsed = false;
+  }
+
+  setEquipment(equipment: Equipment): void {
+    this.snapshot.equipment = equipment;
+    this.movement.equipment = equipment;
+    if (equipment !== 'skate') { this.snapshot.trickTime = 0; this.trickTapWindow = 0; }
+  }
+
+  bounce(force = 430): void {
+    this.movement.launch(force);
+    this.setState('JUMP');
   }
 
   private tick(dt: number, input: InputFrame): void {
     const body = this.snapshot;
     const previousVx = body.vx;
+    const airborne = !body.grounded;
+    this.trickTapWindow = Math.max(0, this.trickTapWindow - dt);
+    if ((body.trickTime ?? 0) > 0) body.trickTime = body.trickTime! + dt >= TRICK_DURATION ? 0 : body.trickTime! + dt;
+    if (airborne && body.equipment === 'skate' && input.jumpPressed && !this.trickUsed) {
+      if (this.trickTapWindow > 0) {
+        body.trickTime = dt; body.tricks = (body.tricks ?? 0) + 1;
+        this.trickUsed = true; this.trickTapWindow = 0; this.onSound?.('trick');
+      } else this.trickTapWindow = 0.45;
+    }
     body.stateTime += dt;
     const events = this.movement.step(dt, input);
+    if (body.grounded) {
+      body.stride = (body.stride ?? 0) + Math.abs(body.vx) * dt;
+      body.trickTime = 0; this.trickUsed = false; this.trickTapWindow = 0;
+    }
     if (events.landed) this.onSound?.('land');
     if (events.jumped) {
       this.onSound?.('jump');

@@ -20,8 +20,8 @@ type TestWindow = { __SKATE__: Diagnostics; selectionPad: MockGamepad };
 
 const snapshot = (page: Page) => page.evaluate(() => (window as unknown as TestWindow).__SKATE__);
 const portraitPixels = (page: Page) => page.locator('#character-portrait').evaluate(canvas => (canvas as HTMLCanvasElement).toDataURL());
-const nanaButton = (page: Page) => page.getByRole('button', { name: 'Selecionar Nana, skate', exact: true });
-const nunuButton = (page: Page) => page.getByRole('button', { name: 'Selecionar Nunu, patins', exact: true });
+const nanaButton = (page: Page) => page.getByRole('button', { name: 'Selecionar Nana', exact: true });
+const nunuButton = (page: Page) => page.getByRole('button', { name: 'Selecionar Nunu', exact: true });
 
 async function expectSelected(page: Page, selected: CharacterId): Promise<void> {
   await expect(page.locator('#character-name')).toHaveText(selected === 'nana' ? 'Nana' : 'Nunu');

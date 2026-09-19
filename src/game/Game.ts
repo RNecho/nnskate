@@ -1,10 +1,11 @@
 import { AudioManager } from './audio/AudioManager';
+import { Adventure } from './adventure/Adventure';
 import { Camera } from './camera/Camera';
 import { Character } from './character/Character';
 import type { CharacterId } from './character/characters';
 import { DEFAULT_PHYSICS, FIXED_STEP, MAX_FRAME_DELTA } from './config';
 import { Input } from './input/Input';
-import { TEST_LEVEL } from './level/Level';
+import { RESCUE_LEVEL } from './level/Level';
 import { Renderer } from './render/Renderer';
 import type { CharacterSnapshot, PhysicsConfig } from './types';
 
@@ -22,7 +23,8 @@ export class Game {
   readonly config: PhysicsConfig = { ...DEFAULT_PHYSICS };
   readonly audio = new AudioManager();
   readonly character: Character;
-  readonly camera = new Camera(TEST_LEVEL);
+  readonly camera = new Camera(RESCUE_LEVEL);
+  readonly adventure: Adventure;
   readonly input: Input;
   paused = false;
   selectedCharacter: CharacterId = 'nana';
@@ -39,8 +41,9 @@ export class Game {
   private observer: ResizeObserver;
 
   constructor(private canvas: HTMLCanvasElement, touchRoot: HTMLElement, private callbacks: GameCallbacks) {
-    this.character = new Character(TEST_LEVEL, this.config, sound => this.audio.play(sound));
-    this.renderer = new Renderer(canvas, TEST_LEVEL);
+    this.character = new Character(RESCUE_LEVEL, this.config, sound => this.audio.play(sound));
+    this.adventure = new Adventure(RESCUE_LEVEL, this.character, sound => this.audio.play(sound));
+    this.renderer = new Renderer(canvas, RESCUE_LEVEL);
     this.input = new Input(() => this.interact(), touchRoot, {
       onGamepadChange: (connected, name, supported) => callbacks.onGamepadChange(connected, name, supported),
       onGamepadInteract: () => this.interact(false),
@@ -98,10 +101,29 @@ export class Game {
   }
 
   reset() {
-    this.character.reset();
+    this.audio.resetMusic();
+    this.adventure.reset();
     this.camera.reset();
     this.input.clear();
     this.accumulator = 0;
+    this.setPaused(false);
+    this.callbacks.onFrame(this.character.snapshot);
+    this.canvas.focus({ preventScroll: true });
+  }
+
+  startAdventure() {
+    if (!this.artReady) return;
+    this.interact();
+    this.adventure.start();
+    this.canvas.focus({ preventScroll: true });
+  }
+
+  retryCheckpoint() {
+    if (this.adventure.phase !== 'defeated') return;
+    this.adventure.retryCheckpoint();
+    this.camera.reset();
+    this.audio.resetMusic();
+    this.input.clear();
     this.setPaused(false);
     this.callbacks.onFrame(this.character.snapshot);
     this.canvas.focus({ preventScroll: true });
@@ -132,13 +154,17 @@ export class Game {
     if (!this.paused && this.artReady) {
       this.accumulator += dt;
       while (this.accumulator >= FIXED_STEP) {
-        this.character.update(FIXED_STEP, this.input.sample());
+        const input = this.input.sample();
+        if (this.adventure.phase === 'defeated' && input.jumpPressed) this.retryCheckpoint();
+        if (input.axis || input.jumpPressed) this.adventure.start();
+        this.adventure.update(FIXED_STEP, input);
         this.camera.update(FIXED_STEP, this.character.snapshot);
         this.accumulator -= FIXED_STEP;
         this.time += FIXED_STEP;
       }
     }
-    this.renderer.render(this.character.snapshot, this.camera.snapshot, this.time, this.selectedCharacter);
+    this.audio.setMood(this.adventure.superTime > 0 ? 'super' : this.adventure.phase === 'reunion' || this.adventure.phase === 'won' ? 'victory' : 'normal');
+    this.renderer.render(this.character.snapshot, this.camera.snapshot, this.time, this.selectedCharacter, this.adventure);
     this.uiElapsed += dt;
     if (this.uiElapsed > 0.08) {
       this.callbacks.onFrame(this.character.snapshot);

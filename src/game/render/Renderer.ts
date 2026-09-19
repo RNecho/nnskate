@@ -1,12 +1,16 @@
+import { drawTerrain } from './TerrainArt';
 import { drawCharacter } from '../character/Animation';
 import type { CharacterId } from '../character/characters';
-import { groundAt } from '../level/Level';
+import { gapAt, groundAt } from '../level/Level';
 import type { CameraSnapshot, CharacterSnapshot, LevelData } from '../types';
 import { artAssets } from './ArtAssets';
+import { AdventureArt } from './AdventureArt';
+import { drawPowerAura } from './ItemArt';
+import type { Adventure } from '../adventure/Adventure';
 
 const C = {
   ink: '#243148', cloud: '#fffdf2', cloudShade: '#bedaff',
-  grass: '#6ecf35', grassLight: '#c5fa55', grassDark: '#15685c',
+  grass: '#80ae61', grassLight: '#c5dfa0', grassDark: '#416c4e',
   soil: '#9463bc', soilLight: '#c486d1', soilShade: '#654078',
   leaf: '#44b743', leafLight: '#a0e844', leafDark: '#176b53',
 };
@@ -14,6 +18,7 @@ const C = {
 /** Scenery is decoration only; all skateable surfaces come from LevelData. */
 export class Renderer {
   private readonly ctx: CanvasRenderingContext2D;
+  private readonly adventureArt: AdventureArt;
   // MediaQueryList.matches stays current when the system preference changes.
   private readonly reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -21,6 +26,7 @@ export class Renderer {
     const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) throw new Error('Seu navegador não oferece suporte ao Canvas 2D.');
     this.ctx = ctx;
+    this.adventureArt = new AdventureArt(ctx);
   }
 
   private rect(x: number, y: number, w: number, h: number, color: string): void {
@@ -63,22 +69,23 @@ export class Renderer {
     const { width, height } = camera;
     const background = artAssets.background;
     if (background?.complete && background.naturalWidth > 0) {
-      // The painted shoreline is ~84% down the panorama. Framing its full
-      // height at 384 places the lake at y322, above the playable ground y370.
-      // A stable world width keeps city details readable in narrow viewports.
+      // Crop the panorama without stretching its painted trees and houses.
+      // The shoreline stays just above the playable ground in every viewport.
       const tileWidth = Math.max(960, width);
       const tileHeight = Math.min(384, height);
       const mobileFraming = tileWidth - width;
       const offset = Math.round(camera.x * 0.18 + mobileFraming);
       const first = Math.floor(offset / tileWidth);
-      this.rect(0, tileHeight, width, Math.max(0, height - tileHeight), '#108ee8');
+      const sourceHeight = Math.min(background.naturalHeight, background.naturalWidth * tileHeight / tileWidth);
+      const sourceY = Math.min(background.naturalHeight - sourceHeight, background.naturalHeight * 0.20);
+      this.rect(0, tileHeight, width, Math.max(0, height - tileHeight), '#88c7c4');
       // Alternating reflections make either edge meet itself without a seam.
       for (let tile = first; tile <= first + Math.ceil(width / tileWidth) + 1; tile++) {
         const x = tile * tileWidth - offset;
         this.ctx.save();
         this.ctx.translate(x + (tile % 2 ? tileWidth : 0), 0);
         if (tile % 2) this.ctx.scale(-1, 1);
-        this.ctx.drawImage(background, 0, 0, tileWidth, tileHeight);
+        this.ctx.drawImage(background, 0, sourceY, background.naturalWidth, sourceHeight, 0, 0, tileWidth, tileHeight);
         this.ctx.restore();
       }
       return;
@@ -270,18 +277,11 @@ export class Renderer {
 
   private decorations(camera: CameraSnapshot, time: number): void {
     this.fence(18,368,235);
-    this.tree(26,370,1.04);
-    this.tree(610,316,0.65,true);
-    this.palm(895,370,0.9);
-    this.tree(1160,370,0.76);
-    this.tree(1725,370,0.9,true);
-    this.tree(2470,370,0.83);
-    this.palm(2080,groundAt(this.level,2080).y,1.1);
+    // Large trees and foliage are now part of the illustrated panorama.
     this.sign(330,370);
-    this.sign(1455,365);
-    this.sign(2680,370,-1);
+    this.sign(2730,370);
     this.cat(748,groundAt(this.level,748).y,time);
-    this.cat(2380,370,time+2);
+    this.cat(2380,groundAt(this.level,2380).y,time+2);
 
     // Bunting belongs to the little park, beyond the skateable surface.
     const bx=496, by=207;
@@ -296,6 +296,7 @@ export class Renderer {
     this.star(397,205,0.75,'#ffeb53'); this.star(675,144,0.55,'#fff18e');
     this.heart(454,148,2,'#ff89bb');
     for (const x of [39,53,69,84,91,238,251,259,278,288,302,362,372,386,391,484,507,522,536,681,687,706,721,805,817,832,854,879,894,925,1134,1176,1375,1510,1750,2121,2182,2420,2581,2610]) {
+      if (gapAt(this.level, x)) continue;
       if(x < camera.x-20 || x > camera.x+camera.width+20) continue;
       const y=groundAt(this.level,x).y;
       this.flower(x,y-2,x%3!==0,x%2===0 ? 1.25 : 1);
@@ -329,121 +330,10 @@ export class Renderer {
   }
 
   private terrain(camera: CameraSnapshot): void {
-    const { ctx: c, level } = this;
-    const bottom = level.height + 80;
-    const terrainPoints = level.ground.map(point => [point.x,point.y]);
-    const points = [...terrainPoints,[level.width,bottom],[0,bottom]];
-    this.polygon(points,C.soil);
-    c.save();
-    c.beginPath(); points.forEach(([x,y],i) => i ? c.lineTo(x,y) : c.moveTo(x,y)); c.closePath(); c.clip();
-    // Outlined violet, magenta and warm orange stone with hand-placed-looking
-    // pixel chips. The deterministic pattern is stable while the camera moves.
-    const from=Math.max(0,Math.floor(camera.x/64)*64-64);
-    const to=Math.min(level.width,camera.x+camera.width+64);
-    const stonePalettes=[
-      ['#9360c3','#b985e0','#69468c','#d09ce8'],
-      ['#ba65b8','#df87c5','#80467f','#f3a2d2'],
-      ['#d47c83','#ec9c91','#915075','#ffb99c'],
-      ['#d29077','#f4b584','#985c6e','#ffd397'],
-      ['#8a67c8','#ae8be4','#59478b','#c7a3f1'],
-    ];
-    for(let row=0;row<11;row++) {
-      const y=302+row*26, offset=row%2*32;
-      this.rect(from,y,to-from,3,'#43334f');
-      for(let x=from-offset;x<to;x+=64) {
-        const index=Math.floor(x/64)+48;
-        const palette=stonePalettes[(Math.floor(index/3)+row%3)%stonePalettes.length];
-        this.rect(x,y,3,26,'#43334f');
-        this.rect(x+3,y+3,60,23,palette[0]);
-        this.rect(x+4,y+3,58,3,palette[1]); this.rect(x+4,y+4,3,17,palette[1]);
-        this.rect(x+6,y+22,56,4,palette[2]); this.rect(x+60,y+8,3,15,palette[2]);
-        this.rect(x+7,y+6,13+(index%4)*7,2,palette[3]);
-        this.rect(x+10+(index%3)*6,y+16,9,3,palette[1]);
-        this.rect(x+31,y+7,13,2,palette[1]);
-        this.rect(x+17,y+21,22,2,palette[0]);
-        for(let chip=0;chip<4;chip++) {
-          const px=x+8+(chip*17+index*7)%45, py=y+8+(chip*7+row*3)%12;
-          this.rect(px,py,2+(chip%3),2,chip%2 ? palette[2] : palette[1]);
-        }
-        if((index+row)%4===0) {
-          this.rect(x+43,y+3,2,8,palette[2]); this.rect(x+40,y+10,4,2,palette[2]);
-          this.rect(x+39,y+12,2,5,palette[2]); this.rect(x+44,y+5,2,5,palette[1]);
-        }
-        if((index*3+row)%7===0) {
-          this.rect(x+3,y+16,7,3,'#514161'); this.rect(x+6,y+14,4,2,palette[2]);
-        }
-      }
-    }
-    for(const [x,star] of [[139,1],[323,0],[591,1],[790,0],[1100,0],[1660,1],[2290,0],[2600,1]]) {
-      if(x>from-50 && x<to+50) this.graffiti(x,groundAt(level,x).y+40,Boolean(star));
-    }
-    // A small wooden ramp dresses the existing collision slope; it does not
-    // add another surface or change its height.
-    this.polygon([[1210,370],[1320,325],[1370,325],[1470,370],[1470,427],[1210,427]],'#694364');
-    this.polygon([[1216,371],[1321,330],[1368,330],[1464,372],[1464,423],[1216,423]],'#e99566');
-    for(let plank=0;plank<13;plank++) {
-      const x=1220+plank*19, top=groundAt(level,x).y+7;
-      this.rect(x,top,2,422-top,'#ba665d'); this.rect(x+3,top,2,422-top,'#ffd08b');
-      this.rect(x+8,top+9,5,2,'#f8b878');
-      this.rect(x+12,414,2,3,'#854b58');
-    }
-    this.heart(1314,364,6,'#c955a0'); this.heart(1317,362,5,'#ff9acd');
-    // Brown soil peeks out behind the blue-green roots under the grass.
-    for(let x=from;x<to;x+=6) {
-      const top=groundAt(level,x+3).y;
-      const depth=18+(Math.floor(x/6)*7%4)*3;
-      this.rect(x,top,6,depth,'#6b4465');
-      this.rect(x,top+depth,6,3,'#b26e98');
-      if(Math.floor(x/6)%5===0) this.rect(x,top+depth+4,3,4,'#d993b2');
-    }
-    c.restore();
-    // The actual collision surface, snapped only for drawing.
-    for(let x=Math.max(0,Math.floor(camera.x/3)*3-3);x<Math.min(level.width,camera.x+camera.width+3);x+=3) {
-      const y=groundAt(level,x+1.5).y;
-      const cell=Math.floor(x/3), notch=(Math.floor(x/9)%4===0 ? 8 : 0);
-      this.rect(x,y,3,21+notch,'#183e49');
-      this.rect(x,y,3,18+notch,C.grassDark);
-      this.rect(x,y+1,3,12+notch,C.grass);
-      this.rect(x,y+1,3,5,C.grassLight);
-      this.rect(x,y,3,2,'#213e43');
-      if(cell%9<3) this.rect(x,y+2,3,3,'#e2ff78');
-      if(cell%7===0) this.rect(x,y+8,3,6,'#a0e245');
-      if(cell%11===0) this.rect(x,y+13,3,7,'#38a64d');
-      if(notch && cell%3===0) this.rect(x,y+20,3,5,'#2d8f68');
-    }
-    // Long dense ivy catches the same lime light as the playfield's edge.
-    for(const x of [18,42,67,233,253,398,434,575,603,823,846,934,1179,1416,1663,2204,2614,2665]) {
-      if(x<camera.x-20||x>camera.x+camera.width+20) continue;
-      const top=groundAt(level,x).y+16, length=5+x%5;
-      this.rect(x,top,3,length*9,'#164e47');
-      this.rect(x+1,top,2,length*9,'#2d9560');
-      for(let i=0;i<length;i++) {
-        const px=x+(i%2 ? 0 : -7), py=top+i*9;
-        this.rect(px,py,10,8,'#174b44'); this.rect(px+1,py,8,6,'#389940');
-        this.rect(px+1,py,6,3,'#8bd338'); this.rect(px+2,py,3,2,'#c1ec51');
-        this.rect(px+4,py+4,4,2,'#237853');
-      }
-    }
-
-    for(const platform of level.platforms) {
-      this.rect(platform.x,platform.y,platform.width,23,'#352d47');
-      this.rect(platform.x+3,platform.y+6,platform.width-6,14,'#9766ba');
-      this.rect(platform.x+4,platform.y+7,platform.width-8,3,'#cb8ddb');
-      this.rect(platform.x,platform.y+1,platform.width,8,C.grass);
-      this.rect(platform.x,platform.y+1,platform.width,3,C.grassLight);
-      for(let x=platform.x+6;x<platform.x+platform.width-5;x+=22) {
-        this.rect(x,platform.y+10,2,10,'#5c3974');
-        this.rect(x+4,platform.y+12,11,2,'#b87dce');
-        this.rect(x+2,platform.y+19,14,2,'#744d92');
-      }
-      this.rect(platform.x+10,platform.y+23,6,11,'#49304f');
-      this.rect(platform.x+11,platform.y+23,3,8,'#b676a4');
-      this.rect(platform.x+platform.width-16,platform.y+23,6,11,'#49304f');
-      this.rect(platform.x+platform.width-15,platform.y+23,3,8,'#b676a4');
-    }
+    drawTerrain(this.ctx, this.level, camera);
   }
 
-  render(character: CharacterSnapshot, camera: CameraSnapshot, time: number, characterId: CharacterId = 'nana'): void {
+  render(character: CharacterSnapshot, camera: CameraSnapshot, time: number, characterId: CharacterId = 'nana', adventure?: Adventure): void {
     const c=this.ctx;
     const reduceMotion=this.reducedMotion.matches;
     const ambientTime=reduceMotion ? 0 : time;
@@ -455,16 +345,24 @@ export class Renderer {
     c.translate(-Math.round(camera.x),-Math.round(camera.y));
     this.decorations(camera,ambientTime);
     this.terrain(camera);
+    if (adventure) this.adventureArt.render(adventure, ambientTime);
     // A compact stepped shadow anchors the skater without a blurry ellipse.
     const ground=groundAt(this.level,character.x).y;
     const shadowY=character.grounded ? character.y : ground;
     const shadowWidth=Math.max(12,31-Math.max(0,shadowY-character.y)*0.08);
-    c.globalAlpha=0.16;
+    c.globalAlpha=character.grounded || !gapAt(this.level, character.x) ? 0.16 : 0;
     this.rect(character.x-shadowWidth/2,shadowY+1,shadowWidth,4,'#405a60');
     this.rect(character.x-shadowWidth/2+4,shadowY+5,shadowWidth-8,2,'#405a60');
     c.globalAlpha=1;
+    const powered = (adventure?.superTime ?? 0) > 0;
+    if (powered || (adventure?.pickupFlash ?? 0) > 0) drawPowerAura(c, character.x, character.y, ambientTime, reduceMotion, !powered);
+    c.save();
+    if (powered) { c.shadowColor = '#ffe58a'; c.shadowBlur = 16; }
     // Freeze idle bob, ponytail sway and blinking; movement/state poses stay live.
-    drawCharacter(c,character,ambientTime,characterId);
+    if (character.invulnerable) c.globalAlpha = 0.65;
+    drawCharacter(c,character,ambientTime,characterId, adventure?.phase === 'won' || adventure?.phase === 'reunion', adventure?.character.usedDoubleJump);
+    c.restore();
+    c.globalAlpha = 1;
     if(!reduceMotion && character.state==='LAND' && character.stateTime<0.14) {
       const spread=character.stateTime*95;
       this.rect(character.x-20-spread,character.y-4,5,3,'#f3eccb');

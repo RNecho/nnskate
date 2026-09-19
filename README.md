@@ -1,6 +1,16 @@
 # Nunu & Nana: Skate Dreams
 
-Protótipo jogável de plataforma em 2D, com seleção entre Nana de skate e Nunu de patins, uma pista de teste e pixel art baseada nas imagens fornecidas. Uma personagem fica ativa por vez. O foco desta versão é experimentar a movimentação.
+Jogo de plataforma em 2D com uma fase de resgate: **Operação Patinhas**. Nunu e Nana começam a pé, encontram skate e patins como poderes, enfrentam monstros e salvam um cachorrinho. Uma irmã fica ativa por vez; a troca preserva o progresso. O percurso do MVP agora tem um jardim ilustrado, monstros com cara de vilão, cachorro animado e uma área de jogo maior.
+
+## A aventura
+
+Clique em **Vamos buscar!** ou mova a personagem. Caia na cabeça dos monstros para derrotá-los. O skate quebra as caixas ao acelerar e derruba monstros comuns em alta velocidade. Na descida, ganhe embalo e pule na faixa dourada da rampa para atravessar o vão. **No ar de skate, dê dois novos toques em ↑ para girar 360°**; Espaço, W e o botão de pulo do celular/controle também funcionam. Os patins liberam um segundo pulo: solte e aperte pular novamente no ar para coletar a chave dourada. Os mesmos poderes funcionam com as duas irmãs.
+
+A personagem tem **cinco corações**. Encostar de lado num monstro tira um coração e o equipamento; acertar a cabeça ou atacar com skate em alta velocidade é seguro. Há 1,8 segundo de proteção após o dano. **Skate e patins permanecem disponíveis nos pontos de coleta**: saia e volte para pegar o poder novamente.
+
+Há **cinco buracos** no chão. Cair custa um coração, remove o equipamento e retorna ao checkpoint **a pé**. Quando os cinco corações acabam, **Recomeçar do início** (ou o botão de pulo) reinicia a fase inteira com cinco corações, a pé, limpando o progresso da tentativa. Skate e patins podem ser coletados novamente. O guardião final recebe três pulos separados na cabeça; com a chave coletada, aproxime-se da gaiola para resgatar o cachorrinho e assistir ao reencontro. **Jogar de novo** reinicia a aventura com a irmã selecionada.
+
+As 12 estrelas são opcionais para o resgate. Coletar todas concede **Superbrilho por 8 segundos**: a personagem brilha e derrota monstros por contato, com música especial e contador. O guardião mantém três acertos; buracos ainda custam um coração e encerram o poder. A recompensa acontece uma vez por partida. Existem três checkpoints, dois tipos de monstros comuns e um guardião. Não há persistência: recarregar a página começa uma nova partida. Mais detalhes técnicos e de validação em [docs/RESCUE.md](docs/RESCUE.md).
 
 ## Abrir o jogo
 
@@ -44,13 +54,13 @@ O resultado fica em `dist/`. Sirva essa pasta por HTTP; abrir `index.html` diret
 
 Celulares têm botões de direção e pulo que podem ser pressionados simultaneamente. Os botões também aceitam Espaço/Enter quando estão com foco. Ao ajustar um slider, as setas controlam o slider.
 
-A Nana aparece em `IDLE` após carregar os três assets locais. Falhas de carregamento exibem uma opção para tentar novamente. A primeira interação por teclado/mouse/toque ativa a trilha original em loop. Navegadores condicionam o início do áudio à interação do usuário; veja a [documentação de autoplay do MDN](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Autoplay). Sair da aba/janela pausa o jogo e o áudio; retome pelo botão, P ou Start.
+A Nana aparece a pé em `IDLE` após carregar as doze imagens locais. Falhas de carregamento exibem uma opção para tentar novamente. A primeira interação por teclado/mouse/toque ativa a trilha original em loop. Navegadores condicionam o início do áudio à interação do usuário. Sair da aba/janela pausa o jogo e o áudio; retome pelo botão, P ou Start.
 
 ### Escolher a personagem
 
-Clique ou toque no retrato no canto superior esquerdo da pista para alternar entre as irmãs. Também funcionam os botões **Nana · Skate** e **Nunu · Patins** acima da pista, as teclas 1/2 ou LB/RB no controle. A Nunu usa a imagem fornecida pelo usuário: óculos, blusa clara, calça escura e patins rosa. Retrato, nome e animações acompanham a escolha.
+Clique ou toque no retrato no canto superior esquerdo da pista para alternar entre as irmãs. Também funcionam os botões **Nana** e **Nunu** acima da pista, as teclas 1/2 ou LB/RB no controle. A Nunu mantém óculos, blusa clara e calça escura; a Nana mantém a roupa preta com ursinho. Retrato, nome e animações acompanham a escolha. Ambas começam a pé e podem coletar os dois poderes.
 
-A troca funciona durante o rolê ou a pausa e mantém posição, velocidade, estado do salto e ajustes de física. Reiniciar a pista mantém a irmã selecionada; recarregar a página volta à Nana. Ambas usam os mesmos parâmetros de movimento nesta versão. Não há multiplayer ou habilidades adicionais.
+A troca funciona durante a aventura ou a pausa e mantém posição, velocidade, equipamento, estado do salto e ajustes de física. Reiniciar mantém a irmã selecionada; recarregar a página volta à Nana. Ambas usam as mesmas regras de movimento. Não há multiplayer.
 
 ### Controle USB
 
@@ -81,9 +91,9 @@ Os padrões ficam em `src/game/config.ts`, em pixels e segundos:
 | `coyoteTime` | 0,11 s | Tolerância para pular após sair de uma plataforma |
 | `jumpBuffer` | 0,12 s | Guarda um pulo apertado pouco antes da aterrissagem |
 
-A física usa passos fixos de 1/120 s, independentemente da taxa de desenho. A inércia é controlada por aceleração, desaceleração e freio, sem outro sistema de forças. O skate acompanha a inclinação do terreno, mas a gravidade ainda não acelera o skate nas descidas: nesta versão, ela controla o salto e a queda.
+A física usa passos fixos de 1/120 s, independentemente da taxa de desenho. A inércia é controlada por aceleração, desaceleração e freio. No trecho especial da descida, a inclinação acelera o skate e o limite sobe para 600 px/s. Pular com embalo na faixa dourada ganha o impulso necessário para atravessar o vão de 500 px. O giro é visual e não altera a trajetória.
 
-A fase é um único trecho de 2.800 px, com chão contínuo, subida/descida suave, uma rampa menor, uma depressão para testar saltos e três pequenas plataformas. As plataformas são unidirecionais: é possível atravessá-las por baixo e pousar por cima. Todas são alcançáveis com a física padrão. Alterar gravidade/pulo pode mudar essa condição.
+A fase de resgate é um único trecho de 4.600 px, com cinco buracos, rampas e cinco plataformas. As plataformas são unidirecionais: é possível atravessá-las por baixo e pousar por cima. A chave foi elevada e exige o segundo pulo dos patins com a física padrão. Alterar gravidade/pulo pode mudar o alcance dos desafios. A pista original de 2.800 px continua disponível internamente para os testes da física.
 
 ## Estrutura
 
@@ -109,9 +119,16 @@ src/
     render/Renderer.ts    Desenho do cenário e da personagem
     render/ArtAssets.ts   Carregamento e preparação das imagens
 public/art/
-  dream-city.png          Panorama da cidade e do lago
+  dream-garden-v2.png    Jardim ilustrado atual (dream-city.png preservado)
+  monsters-v2.png        Monstros com expressões hostis, 12 poses
+  puppy-v2.png           Cachorro, quatro poses
   nana-sprites-keyed.png  Atlas das seis poses da Nana
   nunu-sprites-keyed.png  Atlas original fornecido da Nunu de patins
+  nunu-skate-v3.png       Oito poses próprias da Nunu no skate
+  nana-patins-v3.png      Oito poses próprias da Nana nos patins
+  nunu-motion-v4.png      Caminhada alternada, repouso e saltos da Nunu
+  nana-motion-v4.png      Repouso e saltos alegres da Nana
+  skate-360-v4.png        Oito ângulos da manobra por irmã, com transparência
 tests/
   movement.test.ts         Verificação determinística da física
   browser.spec.ts          Fluxos reais no Chrome
@@ -122,9 +139,11 @@ tests/
 
 Canvas 2D e TypeScript, sem engine, backend ou serviço externo em execução. Vite cuida apenas do desenvolvimento e build. Fontes e imagens são empacotadas localmente. O terreno usa a mesma geometria das colisões. As seis poses detalhadas da Nana e o panorama foram gerados com image_gen a partir da referência; os recortes, pontos de apoio e animações continuam configuráveis em código. A cor verde do atlas vira transparência uma única vez no carregamento. Prompts, arquivos e processo estão em [docs/ART.md](docs/ART.md).
 
-O atlas da Nunu foi copiado diretamente da imagem enviada pelo usuário, sem nova geração. Seus recortes descartam as outras poses e os rastros da folha. JUMP/FALL usam a pose de salto com uma pequena variação de extensão na descida; as demais animações usam poses próprias.
+O atlas original da Nunu foi copiado diretamente da imagem enviada pelo usuário; as poses de patins foram preservadas. Duas novas folhas `nana-foot-v2.png` e `nunu-foot-v2.png` acrescentam oito poses a pé por irmã. O carregador alinha os pés por célula. Prompts e processo das novas imagens estão em [docs/SPRITES-V2.md](docs/SPRITES-V2.md).
 
-O áudio usa Web Audio: melodia original de oito compassos e efeitos separados para pulo, impulso e aterrissagem. Não há downloads de música nem arquivos temporários ausentes.
+A atualização atual adiciona caminhada alternada da Nunu, repouso com piscadas, saltos confiantes da Nana, manobra 360° e terreno com terra, pedras arredondadas e raízes. Novas folhas, prompts e controles estão em [docs/RAMP-MOTION-V4.md](docs/RAMP-MOTION-V4.md).
+
+O áudio usa Web Audio: a nova trilha original **Patinhas ao vento**, sons de equipamento, chave e caixas, música de Superbrilho e uma fanfarra exclusiva no reencontro com o cachorro, além dos efeitos de movimento. Não há downloads de música nem arquivos temporários ausentes. Artes, prompts e regras desta atualização estão em [docs/POWER-POLISH.md](docs/POWER-POLISH.md).
 
 ## Verificar
 
@@ -138,10 +157,10 @@ Os testes de navegador usam Google Chrome instalado e iniciam um servidor local 
 
 Cobertura: seis estados e seus sons, inércia, reversão, rampas, plataformas, alcance do pulo padrão, tolerância após bordas, buffer de pulo, pulo variável, colisão em velocidade alta, equivalência entre 30/60/120 Hz, ajustes ao vivo, pausa, reinício, áudio, câmera, controles de toque e ausência de overflow horizontal. As capturas dos testes ficam em `test-results/` e não entram no Git.
 
-Teste manual principal: abrir → dar impulso → soltar e observar a inércia → segurar pulo → cair → aterrissar → continuar andando → testar plataformas à direita. Abrir a oficina, mudar desaceleração e comparar o tempo até parar.
+Teste manual principal: escolher irmã → começar a pé → pular no primeiro monstro → coletar skate → usar a rampa → coletar patins → testar o segundo pulo → derrotar o guardião → buscar o cachorro → jogar de novo. Teste também dano, checkpoints e troca de irmã durante um salto. A oficina de movimento continua disponível para experimentar ajustes.
 
 ## Limites desta versão
 
-Arte e áudio são provisórios. Gatos, corações e estrelas são decoração. Não há inimigos, história, chefes, sistema de fases, loja, multiplayer, pontuação ou habilidades especiais. Não há persistência de ajustes após recarregar.
+Esta versão tem uma única fase, sem loja, multiplayer ou seleção de fases. Há estrelas coletáveis além das estrelas decorativas do cenário original. Partida e ajustes de física não persistem após recarregar. Monstros, cachorro e cenário usam [novas artes criadas com Imagegen](docs/GARDEN-V3.md). O cachorro tem quatro poses e os monstros têm 12; gaiola, itens e plataformas são desenhados em Canvas. Os novos sprites das irmãs complementam as folhas originais. Nunu de skate e Nana de patins agora usam folhas próprias de oito poses, com equipamento integrado ao desenho.
 
 O jogo tem controles de teclado, toque e gamepad, pausa, foco visível e redução de movimento ambiente conforme a preferência do sistema. O cenário em Canvas ainda depende de visão para jogar; esta versão não oferece navegação espacial por leitor de tela. O Windows e o Chrome reconheceram o dispositivo físico como Logitech Dual Action, com mapeamento padrão. A suíte automatizada usa controle simulado para ser reproduzível e não receber os comandos do jogador durante os testes; a conferência de todos os botões físicos ainda depende do jogador.

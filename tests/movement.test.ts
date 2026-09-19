@@ -26,6 +26,43 @@ function advance(character: Character, seconds: number, input = idle, dt = FIXED
   }
 }
 
+test('terrain gaps have no invisible floor and never teleport a falling character', () => {
+  const level = { ...flat(), gaps: [{ x: 200, width: 400 }] };
+  const character = new Character(level, config());
+  character.reset({ x: 195, y: 370 });
+  character.snapshot.vx = 210;
+  advance(character, 0.07, right);
+  assert.equal(character.snapshot.grounded, false);
+  assert.ok(character.snapshot.y > 370);
+  advance(character, 2, idle);
+  assert.ok(character.snapshot.y > level.height + 160, 'adventure rules, not physics, handle recovery');
+});
+
+test('a held foot jump clears a 120px hole; a platform can still support feet over a hole', () => {
+  const level = { ...flat(), gaps: [{ x: 200, width: 120 }] };
+  const character = new Character(level, config());
+  character.setEquipment('foot');
+  character.reset({ x: 185, y: 370 });
+  character.snapshot.vx = 210;
+  advance(character, 0.8, { ...jump, axis: 1 });
+  assert.ok(character.snapshot.x > 320);
+  assert.equal(character.snapshot.grounded, true);
+  assert.equal(character.snapshot.y, 370);
+  const bridge = new Character({ ...level, spawn: { x: 240, y: 300 }, platforms: [{ x: 220, y: 300, width: 60 }] }, config());
+  advance(bridge, 0.5);
+  assert.equal(bridge.snapshot.grounded, true);
+  assert.equal(bridge.snapshot.y, 300);
+});
+
+test('coyote jump works just after leaving the lip of a hole', () => {
+  const character = new Character({ ...flat(), gaps: [{ x: 200, width: 200 }] }, config());
+  character.reset({ x: 197, y: 370 }); character.snapshot.vx = 210;
+  advance(character, 0.04, right);
+  assert.equal(character.snapshot.grounded, false);
+  character.update(FIXED_STEP, { ...jump, axis: 1 });
+  assert.ok(character.snapshot.vy < -400);
+});
+
 test('the first playable sequence visits every state and triggers its sounds once', () => {
   const sounds: GameSound[] = [];
   const character = new Character(flat(), config(), (sound) => sounds.push(sound));

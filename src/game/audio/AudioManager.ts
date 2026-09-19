@@ -1,22 +1,24 @@
 import type { GameSound } from '../types';
 
-const TEMPO = 112;
+export const MUSIC_TITLE = 'Patinhas ao vento';
+export type MusicMood = 'normal' | 'super' | 'victory';
+const TEMPO = 108;
 const STEP_DURATION = 60 / TEMPO / 4;
 const MASTER_VOLUME = 0.48;
 
-// Original eight-bar tune in C major. Zero is a rest; values are MIDI notes.
+// Original garden theme in F major: soft mallet melody and a lilting bass.
 const MELODY = [
-  [76, 0, 79, 0, 81, 0, 79, 0, 76, 0, 72, 0, 74, 76, 79, 0],
-  [77, 0, 81, 0, 79, 0, 77, 0, 76, 0, 74, 0, 72, 0, 0, 0],
-  [76, 0, 79, 0, 84, 0, 83, 0, 81, 0, 79, 0, 76, 0, 79, 0],
-  [74, 0, 79, 0, 83, 0, 81, 0, 79, 0, 76, 74, 72, 0, 74, 0],
-  [76, 0, 79, 0, 81, 79, 76, 0, 84, 0, 79, 0, 76, 0, 0, 0],
-  [77, 0, 81, 0, 84, 0, 81, 0, 79, 0, 77, 0, 76, 0, 74, 0],
-  [74, 0, 76, 0, 79, 0, 81, 0, 83, 0, 81, 79, 76, 0, 74, 0],
-  [76, 0, 79, 0, 84, 0, 79, 0, 72, 0, 0, 0, 0, 0, 0, 0],
+  [77, 0, 81, 84, 0, 81, 0, 79, 77, 0, 0, 72, 0, 74, 76, 0],
+  [77, 0, 79, 81, 0, 84, 0, 81, 82, 0, 81, 0, 79, 0, 0, 0],
+  [81, 0, 84, 86, 0, 84, 0, 81, 79, 0, 77, 0, 74, 0, 77, 0],
+  [79, 0, 81, 0, 84, 0, 79, 0, 76, 0, 74, 76, 77, 0, 0, 0],
+  [77, 0, 81, 0, 84, 86, 84, 0, 81, 0, 77, 0, 79, 0, 81, 0],
+  [82, 0, 81, 79, 0, 77, 0, 74, 77, 0, 79, 0, 81, 0, 0, 0],
+  [79, 0, 84, 0, 86, 0, 84, 81, 79, 0, 76, 0, 74, 76, 79, 0],
+  [81, 0, 79, 77, 0, 72, 0, 74, 77, 0, 0, 0, 0, 0, 0, 0],
 ];
-const CHORDS = [[48, 52, 55], [53, 57, 60], [45, 48, 52], [43, 47, 50],
-  [48, 52, 55], [53, 57, 60], [43, 47, 50], [48, 52, 55]];
+const CHORDS = [[53, 57, 60], [58, 62, 65], [50, 53, 57], [48, 52, 55],
+  [53, 57, 60], [58, 62, 65], [48, 52, 55], [53, 57, 60]];
 const frequency = (note: number) => 440 * 2 ** ((note - 69) / 12);
 
 /** Small synthesizer: no downloads, autoplay, or audio dependency. */
@@ -31,6 +33,15 @@ export class AudioManager {
   private step = 0;
   private paused = false;
   private disposed = false;
+  private mood: MusicMood = 'normal';
+  private duckUntil = 0;
+
+  setMood(mood: MusicMood) { this.mood = mood; }
+
+  resetMusic() {
+    this.stopVoices(); this.step = 0; this.duckUntil = 0; this.mood = 'normal';
+    this.nextStepTime = (this.context?.currentTime ?? 0) + 0.04;
+  }
 
   /** Invoke from a trusted keyboard/pointer gesture; errors belong to the UI. */
   async unlock(): Promise<void> {
@@ -73,8 +84,49 @@ export class AudioManager {
   play(sound: GameSound): void {
     if (!this.context || this.context.state !== 'running' || this.paused || this.muted || this.disposed) return;
     const now = this.context.currentTime;
+    if (sound === 'rescue') {
+      this.stopVoices(); this.duckUntil = now + 3.2;
+      const melody = [72, 77, 81, 84, 81, 84, 86, 89];
+      melody.forEach((note, i) => {
+        const at = now + i * 0.17;
+        this.bell(note, at, i === melody.length - 1 ? 1.15 : 0.3, 0.16);
+        if (i % 2 === 0) this.tone(frequency(note - 12), at, 0.26, 'triangle', 0.08);
+      });
+      [53, 60, 65, 69].forEach(note => this.tone(frequency(note), now + 1.45, 1.3, 'triangle', 0.065));
+      this.noise(now + 1.45, 0.12, 0.055);
+      // Two gentle puppy yips finish the original rescue fanfare.
+      for (const at of [now + 2.5, now + 2.72]) this.tone(460, at, 0.12, 'triangle', 0.09, 210);
+      return;
+    }
+    if (sound === 'super') {
+      this.duckUntil = now + 0.65;
+      [77, 81, 84, 89, 93].forEach((note, i) => this.bell(note, now + i * 0.09, 0.3, 0.14));
+      return;
+    }
+    if (sound === 'trick') {
+      [77, 84, 89, 96].forEach((note, i) => this.bell(note, now + i * 0.065, 0.16, 0.10));
+      return;
+    }
+    if (sound === 'powerup' || sound === 'key') {
+      const notes = sound === 'key' ? [84, 89, 93, 96] : [65, 72, 77, 81];
+      notes.forEach((note, i) => this.bell(note, now + i * 0.065, 0.3, 0.11));
+      return;
+    }
+    if (sound === 'break') {
+      this.noise(now, 0.12, 0.11); this.noise(now + 0.065, 0.07, 0.055);
+      this.tone(190, now, 0.18, 'triangle', 0.14, 60);
+      this.bell(77, now + 0.09, 0.18, 0.08); return;
+    }
+    if (sound === 'pickup' || sound === 'checkpoint' || sound === 'win') {
+      const notes = sound === 'win' ? [72, 76, 79, 84] : sound === 'checkpoint' ? [72, 79] : [79, 84];
+      notes.forEach((note, i) => this.bell(note, now + i * 0.075, 0.23, 0.10));
+    } else if (sound === 'stomp') {
+      this.tone(250, now, 0.14, 'square', 0.08, 640);
+    } else if (sound === 'hurt') {
+      this.tone(290, now, 0.22, 'triangle', 0.09, 85);
+    }
     if (sound === 'jump') {
-      this.tone(330, now, 0.16, 'square', 0.07, 740);
+      this.tone(330, now, 0.16, 'sine', 0.12, 740);
       this.tone(660, now + 0.045, 0.12, 'triangle', 0.035, 990);
     } else if (sound === 'land') {
       this.tone(145, now, 0.11, 'sine', 0.19, 55);
@@ -118,6 +170,7 @@ export class AudioManager {
   private schedule(): void {
     if (!this.context || this.context.state !== 'running' || this.paused || this.disposed) return;
     const now = this.context.currentTime;
+    if (now < this.duckUntil) { this.nextStepTime = this.duckUntil; return; }
     // A throttled background tab must never replay missed notes in a burst.
     if (this.nextStepTime < now - STEP_DURATION) this.nextStepTime = now + 0.025;
     while (this.nextStepTime < now + 0.12) {
@@ -126,7 +179,12 @@ export class AudioManager {
       const at = this.nextStepTime;
       const note = MELODY[bar][beat];
       const chord = CHORDS[bar];
-      if (note) this.tone(frequency(note), at, STEP_DURATION * 1.5, 'square', 0.048);
+      if (this.mood === 'super') {
+        this.bell([77, 84, 81, 89, 84, 93, 89, 84][beat % 8], at, 0.13, 0.065);
+        if (beat % 4 === 0) this.tone(frequency(chord[0]), at, 0.19, 'triangle', 0.13);
+      } else if (this.mood === 'victory') {
+        if (beat % 4 === 0) this.bell([77, 81, 84, 89][Math.floor(beat / 4)], at, 0.5, 0.055);
+      } else if (note) this.bell(note, at, STEP_DURATION * 1.8, 0.065);
       if (beat % 4 === 0) this.tone(frequency(chord[beat % 8 === 0 ? 0 : 2] - 12), at, 0.32, 'triangle', 0.14);
       if (beat % 4 === 2) this.tone(frequency(chord[Math.floor(beat / 4) % 3] + 12), at, 0.105, 'triangle', 0.052);
       if (beat === 0 || beat === 8) this.tone(110, at, 0.1, 'sine', 0.13, 48);
@@ -144,6 +202,11 @@ export class AudioManager {
     oscillator.frequency.setValueAtTime(hz, at);
     if (endHz) oscillator.frequency.exponentialRampToValueAtTime(endHz, at + duration);
     this.envelope(oscillator, at, duration, volume);
+  }
+
+  private bell(note: number, at: number, duration: number, volume: number) {
+    this.tone(frequency(note), at, duration, 'sine', volume);
+    this.tone(frequency(note) * 2, at, duration * 0.45, 'sine', volume * 0.24);
   }
 
   private noise(at: number, duration: number, volume: number): void {

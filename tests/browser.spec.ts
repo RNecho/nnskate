@@ -20,7 +20,7 @@ test('playable sequence, inertia, pause shortcuts, audio, restart and live tunin
   await page.locator('#game').focus();
   await page.keyboard.down('ArrowRight');
   await expect.poll(async () => (await snapshot(page)).character.state, { intervals: [16] }).toBe('PUSH');
-  await expect.poll(async () => (await snapshot(page)).character.vx).toBe(280);
+  await expect.poll(async () => (await snapshot(page)).character.vx).toBe(210);
   await page.keyboard.up('ArrowRight');
   const coasting = (await snapshot(page)).character;
   expect(coasting.vx).toBeGreaterThan(0);
@@ -34,7 +34,7 @@ test('playable sequence, inertia, pause shortcuts, audio, restart and live tunin
   await expect.poll(async () => (await snapshot(page)).character.state, { intervals: [16] }).toBe('FALL');
   await page.keyboard.up('Space');
   await expect.poll(async () => (await snapshot(page)).character.grounded).toBe(true);
-  await expect(page.locator('#audio-status')).toHaveText('Tocando: Sonhinho sobre rodas');
+  await expect(page.locator('#audio-status')).toHaveText('Tocando: Patinhas ao vento');
 
   await page.getByRole('button', { name: 'Pausar jogo', exact: true }).click();
   expect((await snapshot(page)).paused).toBe(true);
@@ -69,12 +69,18 @@ test('keyboard skating traverses the hill, follows the camera and returns left',
   await page.locator('#art-loading').waitFor({ state: 'hidden' });
   await page.locator('#game').focus();
   await page.keyboard.down('ArrowRight');
+  await expect.poll(async () => (await snapshot(page)).character.x, { intervals: [16] }).toBeGreaterThan(395);
+  await page.keyboard.down('Space');
+  await expect.poll(async () => (await snapshot(page)).character.x, { timeout: 6000 }).toBeGreaterThan(540);
+  await page.keyboard.up('Space');
+  await expect.poll(async () => (await snapshot(page)).character.x, { intervals: [16] }).toBeGreaterThan(555);
+  await page.keyboard.down('Space');
   await expect.poll(async () => (await snapshot(page)).character.x, { timeout: 6000 }).toBeGreaterThan(900);
+  await page.keyboard.up('Space');
   await page.keyboard.up('ArrowRight');
   const right = await snapshot(page);
   expect(right.camera.x).toBeGreaterThan(400);
-  expect(right.character.grounded).toBe(true);
-  expect(right.character.y).toBe(370);
+  expect(right.character.x).toBeGreaterThan(900);
   await page.keyboard.down('ArrowLeft');
   await expect.poll(async () => (await snapshot(page)).character.facing).toBe(-1);
   await page.keyboard.up('ArrowLeft');
