@@ -1,16 +1,16 @@
 # Nunu & Nana: Skate Dreams
 
-Jogo de plataforma em 2D com uma fase de resgate: **Operação Patinhas**. Nunu e Nana começam a pé, encontram skate e patins como poderes, enfrentam monstros e salvam um cachorrinho. Uma irmã fica ativa por vez; a troca preserva o progresso. O percurso do MVP agora tem um jardim ilustrado, monstros com cara de vilão, cachorro animado e uma área de jogo maior.
+Jogo de plataforma em 2D com uma fase de resgate: **Operação Patinhas**. Nunu e Nana começam a pé, encontram skate e patins como poderes, enfrentam monstros e salvam um cachorrinho. Uma personagem fica ativa por vez; a troca preserva o progresso. O percurso do MVP agora tem um jardim ilustrado, monstros com cara de vilão, cachorro animado e uma área de jogo maior.
 
 ## A aventura
 
-Clique em **Vamos buscar!** ou mova a personagem. Caia na cabeça dos monstros para derrotá-los. O skate quebra as caixas ao acelerar e derruba monstros comuns em alta velocidade. Na descida, ganhe embalo e pule na faixa dourada da rampa para atravessar o vão. **No ar de skate, dê dois novos toques em ↑ para girar 360°**; Espaço, W e o botão de pulo do celular/controle também funcionam. Os patins liberam um segundo pulo: solte e aperte pular novamente no ar para coletar a chave dourada. Os mesmos poderes funcionam com as duas irmãs.
+Clique em **Vamos buscar!** ou mova a personagem. Caia na cabeça dos monstros para derrotá-los. O skate quebra as caixas ao acelerar e derruba monstros comuns em alta velocidade. Na descida, ganhe embalo e pule na faixa dourada da rampa para atravessar o vão. **No ar de skate, dê dois novos toques em ↑ para girar 360°**; Espaço, W e o botão de pulo do celular/controle também funcionam. Os patins liberam um segundo pulo: solte e aperte pular novamente no ar para coletar a chave dourada. Os mesmos poderes funcionam com as duas personagens.
 
 A personagem tem **cinco corações**. Encostar de lado num monstro tira um coração e o equipamento; acertar a cabeça ou atacar com skate em alta velocidade é seguro. Há 1,8 segundo de proteção após o dano. **Skate e patins permanecem disponíveis nos pontos de coleta**: saia e volte para pegar o poder novamente.
 
-Há **cinco buracos** no chão. Cair custa um coração, remove o equipamento e retorna ao checkpoint **a pé**. Quando os cinco corações acabam, **Recomeçar do início** (ou o botão de pulo) reinicia a fase inteira com cinco corações, a pé, limpando o progresso da tentativa. Skate e patins podem ser coletados novamente. O guardião final recebe três pulos separados na cabeça; com a chave coletada, aproxime-se da gaiola para resgatar o cachorrinho e assistir ao reencontro. **Jogar de novo** reinicia a aventura com a irmã selecionada.
+Há **cinco buracos** no chão. Cair custa um coração, remove o equipamento e retorna ao checkpoint **a pé**. Quando os cinco corações acabam, **Recomeçar do início** (ou o botão de pulo) reinicia a fase inteira com cinco corações, a pé, limpando o progresso da tentativa. Skate e patins podem ser coletados novamente. O guardião final recebe três pulos separados na cabeça; com a chave coletada, aproxime-se da gaiola para resgatar o cachorrinho e assistir ao reencontro. **Jogar de novo** reinicia a aventura com a personagem selecionada.
 
-As 12 estrelas são opcionais para o resgate. Coletar todas concede **Superbrilho por 8 segundos**: a personagem brilha e derrota monstros por contato, com música especial e contador. O guardião mantém três acertos; buracos ainda custam um coração e encerram o poder. A recompensa acontece uma vez por partida. Existem três checkpoints, dois tipos de monstros comuns e um guardião. Não há persistência: recarregar a página começa uma nova partida. Mais detalhes técnicos e de validação em [docs/RESCUE.md](docs/RESCUE.md).
+As 12 estrelas são opcionais para o resgate. Coletar todas concede **Superbrilho por 8 segundos**: a personagem brilha e derrota monstros por contato, com música especial e contador. O guardião mantém três acertos; buracos ainda custam um coração e encerram o poder. A recompensa acontece uma vez por partida. Existem quatro checkpoints, dois tipos de monstros comuns e um guardião. Não há persistência: recarregar a página começa uma nova partida. Mais detalhes técnicos e de validação em [docs/RESCUE.md](docs/RESCUE.md).
 
 ## Abrir o jogo
 
@@ -54,13 +54,17 @@ O resultado fica em `dist/`. Sirva essa pasta por HTTP; abrir `index.html` diret
 
 Celulares têm botões de direção e pulo que podem ser pressionados simultaneamente. Os botões também aceitam Espaço/Enter quando estão com foco. Ao ajustar um slider, as setas controlam o slider.
 
-A Nana aparece a pé em `IDLE` após carregar as doze imagens locais. Falhas de carregamento exibem uma opção para tentar novamente. A primeira interação por teclado/mouse/toque ativa a trilha original em loop. Navegadores condicionam o início do áudio à interação do usuário. Sair da aba/janela pausa o jogo e o áudio; retome pelo botão, P ou Start.
+A Nana aparece a pé em `IDLE` após carregar as quinze imagens locais. Falhas de carregamento exibem uma opção para tentar novamente. A primeira interação por teclado/mouse/toque ativa a trilha original em loop. Navegadores condicionam o início do áudio à interação do usuário. Sair da aba/janela pausa o jogo e o áudio; retome pelo botão, P ou Start.
 
 ### Escolher a personagem
 
-Clique ou toque no retrato no canto superior esquerdo da pista para alternar entre as irmãs. Também funcionam os botões **Nana** e **Nunu** acima da pista, as teclas 1/2 ou LB/RB no controle. A Nunu mantém óculos, blusa clara e calça escura; a Nana mantém a roupa preta com ursinho. Retrato, nome e animações acompanham a escolha. Ambas começam a pé e podem coletar os dois poderes.
+Clique ou toque no retrato no canto superior esquerdo da pista para alternar entre **Nana e Nunu**. Também funcionam os dois botões acima da pista, as teclas **1/2** ou LB/RB no controle. A Nunu mantém óculos, blusa clara e calça escura; a Nana mantém a roupa preta com ursinho. Retrato, nome e animações acompanham a escolha. Ambas começam a pé e podem coletar os dois poderes.
 
-A troca funciona durante a aventura ou a pausa e mantém posição, velocidade, equipamento, estado do salto e ajustes de física. Reiniciar mantém a irmã selecionada; recarregar a página volta à Nana. Ambas usam as mesmas regras de movimento. Não há multiplayer.
+A troca funciona durante a aventura ou a pausa e mantém posição, velocidade, equipamento, estado do salto e ajustes de física. Reiniciar mantém a personagem selecionada; recarregar a página volta à Nana. As duas usam as mesmas regras de movimento. Não há multiplayer.
+
+O **segundo pulo de patins faz um giro de ponta-cabeça** automaticamente, com oito poses próprias para Nana e Nunu. As animações preservam as silhuetas inteiras, sem recortes de poses vizinhas. O chão, as rampas e as plataformas usam terra com pedras e raízes; as bandeiras têm tecido animado e a gaiola abre após obter a chave e vencer o guardião.
+
+Os quatro checkpoints ficam em chão plano: perto das caixas, antes da descida de skate, perto do desafio dos patins e antes do guardião. São ativados ao pousar em chão firme; cair antes disso mantém o ponto de retorno anterior. Os equipamentos continuam acessíveis a pé. Detalhes em [docs/RESCUE.md](docs/RESCUE.md).
 
 ### Controle USB
 

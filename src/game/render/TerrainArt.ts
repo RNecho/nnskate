@@ -1,5 +1,8 @@
 import { groundAt, groundRanges } from '../level/Level';
 import type { CameraSnapshot, LevelData } from '../types';
+import { artAssets } from './ArtAssets';
+
+const earthPatterns = new WeakMap<CanvasRenderingContext2D, CanvasPattern>();
 
 /** Painted garden earth follows the exact collision profile, including both ramp slopes. */
 export function drawTerrain(c: CanvasRenderingContext2D, level: LevelData, camera: CameraSnapshot) {
@@ -17,7 +20,21 @@ export function drawTerrain(c: CanvasRenderingContext2D, level: LevelData, camer
   const earth = c.createLinearGradient(0, 320, 0, bottom);
   earth.addColorStop(0, '#cbad88'); earth.addColorStop(0.48, '#a98670'); earth.addColorStop(1, '#74596b');
   c.fillStyle = earth; c.fillRect(from, 280, to - from, bottom - 280);
-  // Broad irregular sediment, rounded pebbles and little root systems replace brick tiles.
+  let texture = earthPatterns.get(c);
+  if (!texture && artAssets.terrain) {
+    texture = c.createPattern(artAssets.terrain, 'repeat') ?? undefined;
+    if (texture) {
+      texture.setTransform(new DOMMatrix().scale(600 / artAssets.terrain.naturalWidth));
+      earthPatterns.set(c, texture);
+    }
+  }
+  if (texture) {
+    c.fillStyle = texture; c.fillRect(from, 280, to - from, bottom - 280);
+    const depth = c.createLinearGradient(0, 380, 0, bottom);
+    depth.addColorStop(0, '#734a4800'); depth.addColorStop(1, '#41334c99');
+    c.fillStyle = depth; c.fillRect(from, 280, to - from, bottom - 280);
+  }
+  // Hand-painted stones and soil grain sit below translucent sediment and roots.
   for (let row = 0; row < 6; row++) {
     c.beginPath(); c.moveTo(from, bottom);
     for (let x = from; x <= to + 40; x += 40) c.lineTo(x, groundAt(level, x).y + 44 + row * 45 + Math.sin(x * 0.013 + row) * 9);
@@ -26,7 +43,7 @@ export function drawTerrain(c: CanvasRenderingContext2D, level: LevelData, camer
   }
   for (let x = from; x < to; x += 40) {
     const seed = Math.floor(x / 40), top = groundAt(level, x).y;
-    for (let row = 0; row < 5; row++) {
+    for (let row = 0; row < (texture ? 0 : 5); row++) {
       const px = x + (seed * 13 + row * 19) % 27, py = top + 39 + row * 48 + (seed * 7 + row * 11) % 23;
       const rx = 5 + (seed + row * 3) % 11, ry = 3 + (seed * 3 + row) % 7;
       c.beginPath(); c.ellipse(px, py, rx, ry, Math.sin(seed + row) * 0.4, 0, Math.PI * 2);
@@ -40,26 +57,21 @@ export function drawTerrain(c: CanvasRenderingContext2D, level: LevelData, camer
       c.lineWidth = 1; c.beginPath(); c.moveTo(x + 6, top + 32); c.quadraticCurveTo(x + 20, top + 33, x + 25, top + 45); c.moveTo(x + 6, top + 51); c.lineTo(x - 5, top + 60); c.stroke();
     }
   }
-  // Warm curved timber supports under the speed run. The lip itself remains collision geometry.
+  // The speed run shares the earth material; only its riding edge is marked.
   const ramp = level.skateRamp;
-  if (ramp && to > ramp.from && from < ramp.lip) {
-    const a = Math.max(from, ramp.from), b = Math.min(to, ramp.lip);
-    c.fillStyle = '#b48261'; c.fillRect(a, 310, b - a, 200);
-    for (let x = Math.floor(a / 24) * 24; x < b; x += 24) {
-      const top = groundAt(level, x).y + 14;
-      c.fillStyle = '#d9b38c'; c.fillRect(x + 2, top, 20, 510 - top);
-      c.strokeStyle = '#a67756'; c.lineWidth = 1;
-      c.beginPath(); c.moveTo(x + 8, top + 8); c.bezierCurveTo(x + 16, top + 34, x + 5, 469, x + 12, 499); c.stroke();
-      c.fillStyle = '#785c57'; c.beginPath(); c.arc(x + 12, top + 7, 1.7, 0, Math.PI * 2); c.fill();
-    }
-    c.strokeStyle = '#8e644e'; c.lineWidth = 9; c.beginPath(); c.moveTo(a, 500); c.lineTo(b, 500); c.stroke();
-  }
   c.restore();
   c.lineJoin = 'round'; c.lineCap = 'round';
   profile(12); c.strokeStyle = '#526e51'; c.lineWidth = 24; c.stroke();
   profile(7); c.strokeStyle = '#82a66a'; c.lineWidth = 15; c.stroke();
   profile(3); c.strokeStyle = '#c3d995'; c.lineWidth = 6; c.stroke();
   profile(); c.strokeStyle = '#4a674b'; c.lineWidth = 1.5; c.stroke();
+  for (let x = Math.floor(from / 14) * 14 + 6; x < to; x += 14) {
+    const top = groundAt(level, x).y, seed = Math.floor(x / 14);
+    c.fillStyle = seed % 3 ? '#66854f' : '#97b575';
+    c.beginPath(); c.ellipse(x, top + 15, 7, 5 + seed % 4, 0, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#b4cc82'; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(x - 3, top + 11); c.lineTo(x, top + 14); c.lineTo(x + 3, top + 10); c.stroke();
+  }
   for (let x = from; x < to; x += 20) {
     const y = groundAt(level, x).y, n = Math.floor(x / 20);
     c.strokeStyle = n % 2 ? '#739754' : '#91b573'; c.lineWidth = 1.5;
@@ -87,10 +99,17 @@ export function drawTerrain(c: CanvasRenderingContext2D, level: LevelData, camer
   }
   for (const p of level.platforms) {
     if (p.x > to || p.x + p.width < from) continue;
-    const rock = c.createLinearGradient(0, p.y, 0, p.y + 28); rock.addColorStop(0, '#ddcbb2'); rock.addColorStop(1, '#9a8584');
-    c.fillStyle = rock; c.strokeStyle = '#76696c'; c.lineWidth = 1.5; c.beginPath(); c.roundRect(p.x, p.y + 3, p.width, 24, [5, 5, 12, 12]); c.fill(); c.stroke();
-    c.fillStyle = '#80a363'; c.beginPath(); c.roundRect(p.x - 1, p.y, p.width + 2, 9, 4); c.fill();
-    c.strokeStyle = '#d5e4a8'; c.lineWidth = 2; c.beginPath(); c.moveTo(p.x + 3, p.y + 2); c.lineTo(p.x + p.width - 3, p.y + 2); c.stroke();
-    for (let x = p.x + 16; x < p.x + p.width - 9; x += 34) { c.strokeStyle = '#927f7c'; c.lineWidth = 1; c.beginPath(); c.moveTo(x, p.y + 10); c.lineTo(x - 3, p.y + 17); c.lineTo(x + 4, p.y + 23); c.stroke(); }
+    c.save(); c.beginPath(); c.roundRect(p.x, p.y + 3, p.width, 29, [4, 4, 12, 12]);
+    c.fillStyle = texture ?? earth; c.fill();
+    c.strokeStyle = '#725445'; c.lineWidth = 1.5; c.stroke(); c.clip();
+    const shade = c.createLinearGradient(0, p.y + 7, 0, p.y + 33); shade.addColorStop(0, '#52394d00'); shade.addColorStop(1, '#52394d99');
+    c.fillStyle = shade; c.fillRect(p.x, p.y, p.width, 34); c.restore();
+    c.fillStyle = '#526e51'; c.beginPath(); c.roundRect(p.x, p.y + 2, p.width, 11, 4); c.fill();
+    c.fillStyle = '#82a66a'; c.beginPath(); c.roundRect(p.x, p.y, p.width, 7, 3); c.fill();
+    c.strokeStyle = '#c3d995'; c.lineWidth = 2; c.beginPath(); c.moveTo(p.x + 3, p.y + 1); c.lineTo(p.x + p.width - 3, p.y + 1); c.stroke();
+    for (let x = p.x + 9; x < p.x + p.width - 5; x += 14) {
+      c.fillStyle = '#739755'; c.beginPath(); c.ellipse(x, p.y + 10, 6, 4, 0, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = '#a7c57e'; c.lineWidth = 1; c.beginPath(); c.moveTo(x - 3, p.y + 5); c.lineTo(x, p.y + 2); c.lineTo(x + 2, p.y - 2); c.stroke();
+    }
   }
 }

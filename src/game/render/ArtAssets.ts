@@ -1,6 +1,9 @@
+import type { CharacterId } from '../character/characters';
+import { isolateSpriteAtlas } from './SpriteAtlas';
 /** Source images live with the project; canvas surfaces are prepared once. */
 export const artAssets: {
   background: HTMLImageElement | null;
+  terrain: HTMLImageElement | null;
   nana: HTMLCanvasElement | null;
   nunu: HTMLCanvasElement | null;
   nanaFoot: HTMLCanvasElement | null;
@@ -12,7 +15,10 @@ export const artAssets: {
   nunuMotion: HTMLCanvasElement | null;
   nanaMotion: HTMLCanvasElement | null;
   tricks: HTMLCanvasElement | null;
-} = { background: null, nana: null, nunu: null, nanaFoot: null, nunuFoot: null, monsters: null, puppy: null, nunuSkate: null, nanaPatins: null, nunuMotion: null, nanaMotion: null, tricks: null };
+  nunuFlip: HTMLCanvasElement | null;
+  nanaFlip: HTMLCanvasElement | null;
+} = { background: null, terrain: null, nana: null, nunu: null, nanaFoot: null, nunuFoot: null, monsters: null, puppy: null, nunuSkate: null, nanaPatins: null, nunuMotion: null, nanaMotion: null, tricks: null,
+  nunuFlip: null, nanaFlip: null };
 
 export interface MonsterFrame { x: number; y: number; width: number; height: number }
 export const monsterFrames: MonsterFrame[][] = [];
@@ -21,6 +27,7 @@ export interface RidingFrame extends MonsterFrame { pivotX: number }
 export const ridingFrames: Record<'nunuSkate' | 'nanaPatins', RidingFrame[]> = { nunuSkate: [], nanaPatins: [] };
 export const motionFrames: Record<'nunuMotion' | 'nanaMotion', MonsterFrame[]> = { nunuMotion: [], nanaMotion: [] };
 export const trickFrames: Record<'nunu' | 'nana', MonsterFrame[]> = { nunu: [], nana: [] };
+export const flipFrames: Record<CharacterId, MonsterFrame[]> = { nana: [], nunu: [] };
 
 function prepareRidingFrames(atlas: HTMLCanvasElement): RidingFrame[] {
   const ctx = atlas.getContext('2d', { willReadFrequently: true })!;
@@ -100,11 +107,12 @@ function prepareAtlas(image: HTMLImageElement): HTMLCanvasElement {
 export function loadArtAssets(): Promise<void> {
   if (Object.values(artAssets).every(Boolean)) return Promise.resolve();
   if (pending) return pending;
-  pending = Promise.all([loadImage('dream-garden-v2.png'), loadImage('nana-sprites-keyed.png'), loadImage('nunu-sprites-keyed.png'), loadImage('nana-foot-v2.png'), loadImage('nunu-foot-v2.png'), loadImage('monsters-v2.png'), loadImage('puppy-v2.png'), loadImage('nunu-skate-v3.png'), loadImage('nana-patins-v3.png'), loadImage('nunu-motion-v4.png'), loadImage('nana-motion-v4.png'), loadImage('skate-360-v4.png')])
-    .then(([background, nana, nunu, nanaFoot, nunuFoot, monsters, puppy, nunuSkate, nanaPatins, nunuMotion, nanaMotion, tricks]) => {
+  pending = Promise.all([loadImage('dream-garden-v2.png'), loadImage('nana-sprites-keyed.png'), loadImage('nunu-sprites-keyed.png'), loadImage('nana-foot-v2.png'), loadImage('nunu-foot-v2.png'), loadImage('monsters-v2.png'), loadImage('puppy-v2.png'), loadImage('nunu-skate-v3.png'), loadImage('nana-patins-v3.png'), loadImage('nunu-motion-v4.png'), loadImage('nana-motion-v4.png'), loadImage('skate-360-v4.png'), loadImage('nunu-flip-v1.png'), loadImage('nana-flip-v1.png'), loadImage('terrain-earth-v5.png')])
+    .then(([background, nana, nunu, nanaFoot, nunuFoot, monsters, puppy, nunuSkate, nanaPatins, nunuMotion, nanaMotion, tricks, nunuFlip, nanaFlip, terrain]) => {
       const nanaAtlas = prepareAtlas(nana);
       const nunuAtlas = prepareAtlas(nunu);
       artAssets.background = background;
+      artAssets.terrain = terrain;
       artAssets.nana = nanaAtlas;
       artAssets.nunu = nunuAtlas;
       artAssets.nanaFoot = prepareAtlas(nanaFoot);
@@ -115,6 +123,10 @@ export function loadArtAssets(): Promise<void> {
       const puppyAtlas = prepareAtlas(puppy);
       puppyFrames.splice(0, puppyFrames.length, ...prepareFrames(puppyAtlas, 2, [0, 512, 1024]).flat());
       artAssets.puppy = puppyAtlas;
+      for (const [id, key, source] of [['nunu', 'nunuFlip', nunuFlip], ['nana', 'nanaFlip', nanaFlip]] as const) {
+        artAssets[key] = isolateSpriteAtlas(prepareAtlas(source), 2, true);
+        flipFrames[id] = prepareFrames(artAssets[key], 4, [0, 512, 1024], 8).flat();
+      }
       for (const [key, source] of [['nunuMotion', nunuMotion], ['nanaMotion', nanaMotion]] as const) {
         artAssets[key] = prepareAtlas(source);
         motionFrames[key] = prepareFrames(artAssets[key], 4, [0, 512, 1024], 8).flat();

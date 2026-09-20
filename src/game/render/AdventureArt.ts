@@ -2,9 +2,11 @@ import { CAGE_X, CHECKPOINTS, COMPANION_OFFSET, RESCUE_KEY, SKATE_BARRIER_X, typ
 import { groundAt } from '../level/Level';
 import { artAssets, monsterFrames, puppyFrames } from './ArtAssets';
 import { drawCrate, drawGearItem, drawGoldStar } from './ItemArt';
+import { drawCheckpoint, drawCageBack, drawCageDoor } from './RescueProps';
 
-/** Native pixel scenery follows the same palette and shapes as the original park. */
+/** Illustrated props share the garden palette and follow adventure progress. */
 export class AdventureArt {
+  private unlockedAt: number | null = null;
   constructor(private c: CanvasRenderingContext2D) {}
   private rect(x: number, y: number, w: number, h: number, color: string) {
     this.c.fillStyle = color; this.c.fillRect(Math.round(x), Math.round(y), w, h);
@@ -157,15 +159,12 @@ export class AdventureArt {
       c.strokeStyle = '#fff0b9'; c.lineWidth = 3;
       c.beginPath(); c.arc(pickup.x, y, 37, 0, Math.PI * 2); c.stroke();
       this.gear(pickup.x, y, pickup.equipment === 'skate');
-      this.label(pickup.x, y - 50, pickup.equipment === 'skate' ? 'SUPERVELOCIDADE' : 'PULO DUPLO');
+      this.label(pickup.x, y - 85, pickup.equipment === 'skate' ? 'SUPERVELOCIDADE' : 'PULO DUPLO + GIRO');
       this.rect(pickup.x - 34, groundAt(adventure.level, pickup.x).y - 5, 68, 5, '#c29ce5');
     }
     for (let i = 1; i < CHECKPOINTS.length; i++) {
       const x = CHECKPOINTS[i], y = groundAt(adventure.level, x).y;
-      this.rect(x - 2, y - 82, 5, 82, '#59415d');
-      this.rect(x + 3, y - 81, 35, 22, i <= adventure.checkpoint ? '#faf0ba' : '#776382');
-      this.rect(x + 10, y - 75, 7, 7, i <= adventure.checkpoint ? '#5b9a70' : '#b3a1bd');
-      this.rect(x + 17, y - 68, 7, 7, i <= adventure.checkpoint ? '#5b9a70' : '#b3a1bd');
+      drawCheckpoint(c, x, y, i <= adventure.checkpoint, time);
     }
     for (const x of [440, 810, 1750, 2260, 2900, 3390]) {
       const y = groundAt(adventure.level, x).y + 45;
@@ -179,6 +178,7 @@ export class AdventureArt {
 
     const y = groundAt(adventure.level, CAGE_X).y;
     if (adventure.phase === 'intro') {
+      this.unlockedAt = null;
       const progress = Math.max(0, Math.min(1, (adventure.introTime - 1) / 3));
       const x = 275 + progress * 620;
       this.monster({ ...adventure.boss, x, y: 370, kind: 'slime', hp: 1 }, time);
@@ -188,16 +188,13 @@ export class AdventureArt {
       this.rect(237, 359, 11, 11, '#e79dbd'); this.rect(239, 359, 4, 5, '#ffe7a1');
     } else {
       const rescued = adventure.phase === 'reunion' || adventure.phase === 'won';
-      this.rect(CAGE_X - 52, y - 100, 104, 102, '#66527b');
-      this.rect(CAGE_X - 47, y - 94, 94, 91, '#c2b2ca');
-      this.rect(CAGE_X - 41, y - 87, 82, 80, '#6f637f');
+      drawCageBack(c, CAGE_X, y);
       if (!rescued) this.dog(CAGE_X, y - 7, time, false, false, -1);
-      if (adventure.boss.hp > 0 || !adventure.keyCollected) {
-        for (let bar = -35; bar <= 35; bar += 17) { this.rect(CAGE_X + bar, y - 90, 5, 87, '#e4d6e1'); }
-        this.rect(CAGE_X - 10, y - 45, 20, 23, '#f6c96c'); this.rect(CAGE_X - 2, y - 39, 5, 10, '#69516a');
-      } else {
-        this.rect(CAGE_X + 48, y - 96, 28, 5, '#e4d6e1'); this.rect(CAGE_X + 72, y - 96, 4, 96, '#e4d6e1');
-      }
+      const unlocked = adventure.boss.hp === 0 && adventure.keyCollected;
+      if (!unlocked) this.unlockedAt = null;
+      else if (this.unlockedAt === null) this.unlockedAt = adventure.time;
+      const opening = this.unlockedAt === null ? 0 : Math.min(1, (adventure.time - this.unlockedAt) / 0.7);
+      drawCageDoor(c, CAGE_X, y, opening * opening * (3 - 2 * opening));
       if (rescued) {
         const target = adventure.character.snapshot.x + COMPANION_OFFSET;
         const running = Math.abs(adventure.dogX - target) > 14;

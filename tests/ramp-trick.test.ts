@@ -1,12 +1,32 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { Character, TRICK_DURATION } from '../src/game/character/Character';
+import { Character, TRICK_DURATION, FLIP_DURATION } from '../src/game/character/Character';
 import { Adventure } from '../src/game/adventure/Adventure';
 import { DEFAULT_PHYSICS, FIXED_STEP } from '../src/game/config';
 import { RESCUE_LEVEL, SKATE_RAMP, groundAt } from '../src/game/level/Level';
 import type { Equipment, InputFrame, GameSound } from '../src/game/types';
 
 const idle: InputFrame = { axis: 0, jumpHeld: false, jumpPressed: false };
+
+test('the patins somersault starts only on the second jump and ends without granting a third jump', () => {
+  const sounds: GameSound[] = [];
+  const character = new Character(RESCUE_LEVEL, { ...DEFAULT_PHYSICS }, sound => sounds.push(sound));
+  character.setEquipment('patins');
+  const jump = { ...idle, jumpHeld: true, jumpPressed: true };
+  character.update(FIXED_STEP, jump);
+  assert.equal(character.snapshot.flipTime ?? 0, 0);
+  for (let i = 0; i < 12; i++) character.update(FIXED_STEP, { ...jump, jumpPressed: false });
+  character.update(FIXED_STEP, jump);
+  assert.ok(character.snapshot.flipTime! > 0);
+  const secondVy = character.snapshot.vy;
+  character.update(FIXED_STEP, { ...jump, jumpPressed: false });
+  character.update(FIXED_STEP, jump);
+  assert.ok(character.snapshot.vy > secondVy, 'a third press must not apply another impulse');
+  assert.equal(sounds.filter(sound => sound === 'trick').length, 1);
+  for (let i = 0; i < Math.ceil(FLIP_DURATION / FIXED_STEP) + 2; i++) character.update(FIXED_STEP, { ...jump, jumpPressed: false });
+  assert.equal(character.snapshot.flipTime, 0);
+  character.reset(); assert.equal(character.snapshot.flipTime, 0);
+});
 
 test('the downhill run builds skateboard speed and its marked jump clears the ravine', () => {
   const body = new Character(RESCUE_LEVEL, { ...DEFAULT_PHYSICS });

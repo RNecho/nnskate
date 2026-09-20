@@ -40,3 +40,12 @@ Teste manual: escolha uma irmã, comece, pule no primeiro monstro, pegue skate, 
 
 O Canvas exige visão para orientação espacial. A interface conserva foco visível, atalhos, controles por toque, anúncios de objetivo e redução de movimento ambiente. Som e arte carregam localmente; não há publicação automática nesta alteração.
 
+
+
+## Checkpoints reposicionados
+
+Existem quatro bandeiras, além do início (x=150): x=1120 perto das caixas, x=1390 antes da descida de skate, x=3060 antes do desafio da chave com patins e x=3890 antes do guardião. Todos os retornos ficam em chão plano, a mais de 60 pixels das bordas de buracos e fora das patrulhas dos inimigos. O antigo ponto x=2900 ficava dentro do buraco x=2840–2910 e foi removido.
+
+A ativação exige que a personagem esteja apoiada em chão firme. Passar pela bandeira no ar e cair no buraco não altera o retorno salvo. Uma queda devolve a personagem a pé, mantendo o progresso; as estações de skate e patins estão a até 100 pixels dos pontos de retorno dos respectivos desafios. A seleção e os atalhos ficam restritos a Nana e Nunu (1/2, retrato e LB/RB).
+
+Validação desta revisão: `npm test` aprovou 52 testes; `npm run test:browser -- --workers=2` aprovou 23 testes, incluindo o resgate completo com Nana e Nunu; `npm run build` concluiu sem erros. Capturas das quatro bandeiras e da seleção no celular foram inspecionadas. As artes removidas da Juju estão preservadas em `archive/art/juju/` e não fazem parte do carregamento nem do build publicado.

@@ -38,6 +38,7 @@ export interface CharacterSnapshot {
   stride?: number;
   trickTime?: number;
   tricks?: number;
+  flipTime?: number;
 }
 
 export interface GroundPoint { x: number; y: number }

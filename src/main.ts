@@ -8,11 +8,11 @@ import '@fontsource/silkscreen/400.css';
 import './style.css';
 import { Game } from './game/Game';
 import { MUSIC_TITLE } from './game/audio/AudioManager';
-import { POWER_LABELS, RESCUE_KEY, MAX_HEALTH } from './game/adventure/Adventure';
+import { POWER_LABELS, RESCUE_KEY, MAX_HEALTH, CHECKPOINTS } from './game/adventure/Adventure';
 import { RESCUE_LEVEL } from './game/level/Level';
 import { loadArtAssets } from './game/render/ArtAssets';
 import { drawCharacterPortrait } from './game/character/Animation';
-import { CHARACTERS, type CharacterId } from './game/character/characters';
+import { CHARACTERS, CHARACTER_ORDER, nextCharacter, type CharacterId } from './game/character/characters';
 import { DEFAULT_PHYSICS } from './game/config';
 import type { CharacterState, PhysicsConfig } from './game/types';
 import { icon, pixelStar, skateLogo } from './ui/icons';
@@ -99,7 +99,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
           <div class="art-loading pause-overlay" id="art-loading" aria-busy="true">
             <div class="pause-content">
               ${pixelStar}
-              <p id="art-status" role="status" aria-live="polite" aria-atomic="true">Preparando o sonho das irmãs…</p>
+              <p id="art-status" role="status" aria-live="polite" aria-atomic="true">Preparando a aventura…</p>
               <button class="primary-button" id="retry-art" type="button" hidden>Tentar novamente</button>
             </div>
           </div>
@@ -181,10 +181,10 @@ const game = new Game(canvas, element('touch-controls'), {
     setText('skate-challenge', `${adventure.barrierBroken && adventure.rampCleared ? '✓' : '◇'} Skate: caixas e rampa`);
     setText('patins-challenge', `${adventure.keyCollected ? '✓' : '◇'} Patins: chave`);
     setText('mission-objective', adventure.objective);
-    setText('checkpoint-label', adventure.checkpoint ? `Checkpoint ${adventure.checkpoint} / 3` : 'Início da aventura');
+    setText('checkpoint-label', adventure.checkpoint ? `Checkpoint ${adventure.checkpoint} / ${CHECKPOINTS.length - 1}` : 'Início da aventura');
     setText('health-label', `${adventure.health} de ${adventure.maxHealth} corações`);
     document.querySelectorAll<SVGElement>('[data-heart]').forEach(heart => heart.classList.toggle('empty', Number(heart.dataset.heart) >= adventure.health));
-    setText('adventure-message', (snapshot.trickTime ?? 0) > 0 ? 'Giro 360°! Boa manobra!' : adventure.messageTime > 0 ? adventure.message : adventure.phase === 'playing' ? 'Setas: mover · Espaço: pular · No ar de skate: ↑ + ↑ faz giro 360° · 1 / 2: trocar irmã' : 'Uma amizade vale a aventura inteira.');
+    setText('adventure-message', (snapshot.flipTime ?? 0) > 0 ? 'De ponta-cabeça! Giro de patins!' : (snapshot.trickTime ?? 0) > 0 ? 'Giro 360°! Boa manobra!' : adventure.messageTime > 0 ? adventure.message : adventure.phase === 'playing' ? 'Setas: mover · Espaço: pular · Patins: segundo pulo faz mortal · Skate: ↑ + ↑ no ar faz 360° · 1 / 2: trocar' : 'Uma amizade vale a aventura inteira.');
     element('intro-panel').hidden = adventure.phase !== 'intro';
     element('victory-panel').hidden = adventure.phase !== 'won';
     element('defeat-panel').hidden = adventure.phase !== 'defeated';
@@ -230,16 +230,16 @@ const game = new Game(canvas, element('touch-controls'), {
 
 function updateCharacterSelection(id: CharacterId) {
   const character = CHARACTERS[id];
-  const nextCharacter = CHARACTERS[id === 'nana' ? 'nunu' : 'nana'];
-  characterToggle.setAttribute('aria-label', `Personagem atual: ${character.label}. Trocar para ${nextCharacter.label}.`);
-  characterToggle.title = `Trocar para ${nextCharacter.label}`;
+  const next = CHARACTERS[nextCharacter(id)];
+  characterToggle.setAttribute('aria-label', `Personagem atual: ${character.label}. Trocar para ${next.label}.`);
+  characterToggle.title = `Trocar para ${next.label}`;
   element('character-name').textContent = character.label;
   element('character-state-label').textContent = `ESTADO DA ${character.label.toUpperCase()}`;
   drawCharacterPortrait(element<HTMLCanvasElement>('character-portrait'), id);
   document.querySelectorAll<HTMLButtonElement>('[data-character]').forEach(button => {
     button.setAttribute('aria-pressed', String(button.dataset.character === id));
   });
-  canvas.setAttribute('aria-label', `Aventura da ${character.label}. Resgate o cachorrinho. Use setas ou analógico para andar. Espaço ou A para pular. Com patins, aperte novamente para pulo duplo. P ou Start para pausar. 1/2 ou LB/RB para trocar personagem.`);
+  canvas.setAttribute('aria-label', `Aventura da ${character.label}. Resgate o cachorrinho. Use setas ou analógico para andar. Espaço ou A para pular. Com patins, aperte novamente para pulo duplo com giro de ponta-cabeça. P ou Start para pausar. 1/2 ou LB/RB para trocar personagem.`);
   element('announcement').textContent = `${character.label} selecionada. As duas podem coletar skate e patins.`;
 }
 
@@ -255,7 +255,7 @@ document.querySelectorAll<HTMLButtonElement>('[data-character]').forEach(button 
 
 characterToggle.addEventListener('click', () => {
   game.interact();
-  game.selectCharacter(game.selectedCharacter === 'nana' ? 'nunu' : 'nana');
+  game.selectCharacter(nextCharacter(game.selectedCharacter));
   canvas.focus({ preventScroll: true });
 });
 
@@ -267,12 +267,11 @@ async function prepareArt() {
   overlay.hidden = false;
   overlay.setAttribute('aria-busy', 'true');
   retry.hidden = true;
-  element('art-status').textContent = 'Preparando o sonho das irmãs…';
+  element('art-status').textContent = 'Preparando a aventura…';
   document.querySelectorAll<HTMLButtonElement>('[data-character]').forEach(button => { button.disabled = true; });
   try {
     await loadArtAssets();
-    drawCharacterPortrait(element<HTMLCanvasElement>('selector-portrait-nana'), 'nana');
-    drawCharacterPortrait(element<HTMLCanvasElement>('selector-portrait-nunu'), 'nunu');
+    for (const id of CHARACTER_ORDER) drawCharacterPortrait(element<HTMLCanvasElement>(`selector-portrait-${id}`), id);
     game.setArtReady(true);
     updateCharacterSelection(game.selectedCharacter);
     characterToggle.disabled = false;
@@ -337,10 +336,10 @@ window.addEventListener('keydown', event => {
   if (event.code === 'KeyM') { event.preventDefault(); toggleSound(); }
   if (event.code === 'KeyR') { event.preventDefault(); game.interact(); game.reset(); }
   if (event.code === 'KeyF') { event.preventDefault(); void toggleFullscreen(); }
-  if (event.code === 'Digit1' || event.code === 'Numpad1' || event.code === 'Digit2' || event.code === 'Numpad2') {
+  if (/^(Digit|Numpad)[12]$/.test(event.code)) {
     event.preventDefault();
     game.interact();
-    game.selectCharacter(event.code.endsWith('1') ? 'nana' : 'nunu');
+    game.selectCharacter(CHARACTER_ORDER[Number(event.code.slice(-1)) - 1]);
   }
 });
 

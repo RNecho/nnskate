@@ -6,6 +6,7 @@ const PUSH_DURATION = 0.3;
 const LAND_DURATION = 0.12;
 const IDLE_SPEED = 0.5;
 export const TRICK_DURATION = 0.48;
+export const FLIP_DURATION = 0.5;
 
 /** Owns animation states; Movement owns all motion and surface collision. */
 export class Character {
@@ -45,6 +46,7 @@ export class Character {
     this.snapshot.state = 'IDLE';
     this.snapshot.stateTime = 0;
     this.snapshot.stride = 0; this.snapshot.trickTime = 0; this.snapshot.tricks = 0;
+    this.snapshot.flipTime = 0;
     this.trickTapWindow = 0; this.trickUsed = false;
   }
 
@@ -52,6 +54,7 @@ export class Character {
     this.snapshot.equipment = equipment;
     this.movement.equipment = equipment;
     if (equipment !== 'skate') { this.snapshot.trickTime = 0; this.trickTapWindow = 0; }
+    if (equipment !== 'patins') this.snapshot.flipTime = 0;
   }
 
   bounce(force = 430): void {
@@ -65,6 +68,7 @@ export class Character {
     const airborne = !body.grounded;
     this.trickTapWindow = Math.max(0, this.trickTapWindow - dt);
     if ((body.trickTime ?? 0) > 0) body.trickTime = body.trickTime! + dt >= TRICK_DURATION ? 0 : body.trickTime! + dt;
+    if ((body.flipTime ?? 0) > 0) body.flipTime = body.flipTime! + dt >= FLIP_DURATION ? 0 : body.flipTime! + dt;
     if (airborne && body.equipment === 'skate' && input.jumpPressed && !this.trickUsed) {
       if (this.trickTapWindow > 0) {
         body.trickTime = dt; body.tricks = (body.tricks ?? 0) + 1;
@@ -72,10 +76,15 @@ export class Character {
       } else this.trickTapWindow = 0.45;
     }
     body.stateTime += dt;
+    const doubleJumpWasUsed = this.movement.usedDoubleJump;
     const events = this.movement.step(dt, input);
+    if (events.jumped && airborne && body.equipment === 'patins' && !doubleJumpWasUsed && this.movement.usedDoubleJump) {
+      body.flipTime = dt; this.onSound?.('trick');
+    }
     if (body.grounded) {
       body.stride = (body.stride ?? 0) + Math.abs(body.vx) * dt;
       body.trickTime = 0; this.trickUsed = false; this.trickTapWindow = 0;
+      body.flipTime = 0;
     }
     if (events.landed) this.onSound?.('land');
     if (events.jumped) {

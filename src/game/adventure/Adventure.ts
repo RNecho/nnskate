@@ -1,5 +1,5 @@
 import { Character } from '../character/Character';
-import { groundAt } from '../level/Level';
+import { gapAt, groundAt } from '../level/Level';
 import type { Equipment, GameSound, InputFrame, LevelData } from '../types';
 
 export type Phase = 'intro' | 'playing' | 'reunion' | 'won' | 'defeated';
@@ -15,7 +15,9 @@ export const RESCUE_KEY = { x: 3140, y: 135 };
 export const SUPER_DURATION = 8;
 export const MAX_HEALTH = 5;
 export const COMPANION_OFFSET = 64;
-export const CHECKPOINTS = [150, 1150, 2900, 3830];
+// Solid, level resting spots: crates, skate run, roller-skate challenge, guardian.
+// Gear stations remain reachable on foot after losing equipment in a fall.
+export const CHECKPOINTS = [150, 1120, 1390, 3060, 3890];
 export const POWER_LABELS: Record<Equipment, string> = {
   foot: 'A pé', skate: 'Skate · supervelocidade', patins: 'Patins · pulo duplo',
 };
@@ -183,7 +185,7 @@ export class Adventure {
     }
 
     for (let i = this.checkpoint + 1; i < CHECKPOINTS.length; i++) {
-      if (body.x >= CHECKPOINTS[i]) {
+      if (body.x >= CHECKPOINTS[i] && body.grounded && !gapAt(this.level, body.x)) {
         this.checkpoint = i;
         this.sound('checkpoint'); this.say('Checkpoint! Se precisar, você volta para esta bandeira.');
       }

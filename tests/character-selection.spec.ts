@@ -24,7 +24,7 @@ const nanaButton = (page: Page) => page.getByRole('button', { name: 'Selecionar 
 const nunuButton = (page: Page) => page.getByRole('button', { name: 'Selecionar Nunu', exact: true });
 
 async function expectSelected(page: Page, selected: CharacterId): Promise<void> {
-  await expect(page.locator('#character-name')).toHaveText(selected === 'nana' ? 'Nana' : 'Nunu');
+  await expect(page.locator('#character-name')).toHaveText({ nana: 'Nana', nunu: 'Nunu' }[selected]);
   await expect(nanaButton(page)).toHaveAttribute('aria-pressed', String(selected === 'nana'));
   await expect(nunuButton(page)).toHaveAttribute('aria-pressed', String(selected === 'nunu'));
   await expect.poll(async () => (await snapshot(page)).selectedCharacter).toBe(selected);
@@ -69,7 +69,7 @@ test.beforeEach(async ({ page }) => {
   await page.locator('#art-loading').waitFor({ state: 'hidden' });
 });
 
-test('mouse and number keys select Nana or Nunu with matching names, pressed buttons and portraits', async ({ page }) => {
+test('mouse and number keys select Nana and Nunu with matching names, buttons and portraits', async ({ page }) => {
   await expectSelected(page, 'nana');
   const nanaPortrait = await portraitPixels(page);
   await nunuButton(page).click();
@@ -83,6 +83,10 @@ test('mouse and number keys select Nana or Nunu with matching names, pressed but
   await page.keyboard.press('2');
   await expectSelected(page, 'nunu');
   await expect.poll(() => portraitPixels(page)).toBe(nunuPortrait);
+  await page.keyboard.press('3');
+  await expectSelected(page, 'nunu');
+  await expect(page.locator('[data-character]')).toHaveCount(2);
+  expect(await page.evaluate(() => performance.getEntriesByType('resource').some(entry => /\/art\/juju/i.test(entry.name)))).toBe(false);
   await nanaButton(page).click();
   await expectSelected(page, 'nana');
 });
@@ -121,7 +125,7 @@ test('switching characters preserves current position, velocity, physics and pau
   await expect.poll(async () => (await snapshot(page)).paused).toBe(false);
 });
 
-test('the portrait button alternates sisters by click, Enter and Space without changing paused movement', async ({ page }) => {
+test('the portrait cycles Nana and Nunu by click, Enter and Space without changing paused movement', async ({ page }) => {
   const toggle = page.locator('#character-toggle');
   const portrait = page.locator('#character-portrait');
   await expect(toggle).toBeEnabled();
@@ -166,7 +170,7 @@ test('the portrait button alternates sisters by click, Enter and Space without c
 test.describe('portrait touch selection', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
 
-  test('tapping the portrait alternates both sisters above the pause overlay on a narrow screen', async ({ page }) => {
+  test('tapping the portrait cycles both characters above the pause overlay on a narrow screen', async ({ page }) => {
     await expect(page.locator('#character-toggle')).toBeEnabled();
     await page.locator('#pause-button').tap();
     await expect.poll(async () => (await snapshot(page)).paused).toBe(true);

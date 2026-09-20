@@ -1,7 +1,7 @@
 import type { CharacterSnapshot, CharacterState } from '../types';
-import { artAssets, footBaselines, ridingFrames, motionFrames, trickFrames, type MonsterFrame } from '../render/ArtAssets';
+import { artAssets, footBaselines, ridingFrames, motionFrames, trickFrames, flipFrames, type MonsterFrame } from '../render/ArtAssets';
 import type { CharacterId } from './characters';
-import { TRICK_DURATION } from './Character';
+import { TRICK_DURATION, FLIP_DURATION } from './Character';
 
 interface SpriteFrame {
   x: number; y: number; width: number; height: number;
@@ -44,6 +44,9 @@ export function drawCharacter(
   doubleJumped = false,
 ): void {
   const equipment = character.equipment;
+  if (equipment === 'patins' && !character.grounded && (character.flipTime ?? 0) > 0) {
+    drawFlip(ctx, character, characterId); return;
+  }
   if (equipment === 'skate' && !character.grounded && (character.trickTime ?? 0) > 0 && artAssets.tricks) {
     const frames = trickFrames[characterId];
     drawPose(ctx, character, artAssets.tricks, frames, Math.min(7, Math.floor(character.trickTime! / TRICK_DURATION * 8)), time, 112);
@@ -168,6 +171,19 @@ function drawFootCharacter(ctx: CanvasRenderingContext2D, character: CharacterSn
       ctx.fillStyle = '#ffe5f0'; ctx.fillRect(x + 2, -5, 3, 3);
     }
   }
+  ctx.restore();
+}
+
+/** A somersault rotates around the torso, never around the lowest pixel of each pose. */
+function drawFlip(ctx: CanvasRenderingContext2D, body: CharacterSnapshot, id: CharacterId) {
+  const atlas = artAssets[id === 'nana' ? 'nanaFlip' : 'nunuFlip'];
+  const frames = flipFrames[id];
+  if (!atlas || frames.length !== 8) return;
+  const index = Math.min(7, Math.floor(body.flipTime! / FLIP_DURATION * 8)), frame = frames[index];
+  const scale = 132 / Math.max(...frames.map(f => Math.max(f.width, f.height)));
+  const cx = (index % 4 + 0.5) * atlas.width / 4, cy = (Math.floor(index / 4) + 0.5) * atlas.height / 2;
+  ctx.save(); ctx.translate(Math.round(body.x), Math.round(body.y - 64)); ctx.scale(body.facing, 1);
+  ctx.drawImage(atlas, frame.x, frame.y, frame.width, frame.height, (frame.x - cx) * scale, (frame.y - cy) * scale, frame.width * scale, frame.height * scale);
   ctx.restore();
 }
 

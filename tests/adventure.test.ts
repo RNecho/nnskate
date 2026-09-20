@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { Adventure, CAGE_X, COMPANION_OFFSET, RESCUE_KEY, SKATE_BARRIER_X, SUPER_DURATION } from '../src/game/adventure/Adventure';
+import { Adventure, CAGE_X, CHECKPOINTS, COMPANION_OFFSET, RESCUE_KEY, SKATE_BARRIER_X, SUPER_DURATION } from '../src/game/adventure/Adventure';
 import { Character } from '../src/game/character/Character';
 import { DEFAULT_PHYSICS, FIXED_STEP } from '../src/game/config';
 import { groundAt, RESCUE_LEVEL } from '../src/game/level/Level';
@@ -147,7 +147,7 @@ test('falling through a hole consumes exactly one heart and returns to the check
   advance(adventure, 1.5);
   assert.equal(adventure.health, 4);
   assert.equal(adventure.retries, 1);
-  assert.equal(character.snapshot.x, 1150);
+  assert.equal(character.snapshot.x, CHECKPOINTS[1]);
   assert.equal(adventure.phase, 'playing');
   // Falling again during invulnerability still costs one heart.
   place(character, 1900, RESCUE_LEVEL.height + 90); adventure.update(FIXED_STEP, idle);

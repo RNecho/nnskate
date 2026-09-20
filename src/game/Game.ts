@@ -2,7 +2,7 @@ import { AudioManager } from './audio/AudioManager';
 import { Adventure } from './adventure/Adventure';
 import { Camera } from './camera/Camera';
 import { Character } from './character/Character';
-import type { CharacterId } from './character/characters';
+import { nextCharacter, type CharacterId } from './character/characters';
 import { DEFAULT_PHYSICS, FIXED_STEP, MAX_FRAME_DELTA } from './config';
 import { Input } from './input/Input';
 import { RESCUE_LEVEL } from './level/Level';
@@ -48,7 +48,7 @@ export class Game {
       onGamepadChange: (connected, name, supported) => callbacks.onGamepadChange(connected, name, supported),
       onGamepadInteract: () => this.interact(false),
       onGamepadPause: () => { if (this.artReady) this.setPaused(!this.paused); },
-      onGamepadCharacterStep: () => this.selectCharacter(this.selectedCharacter === 'nana' ? 'nunu' : 'nana'),
+      onGamepadCharacterStep: step => this.selectCharacter(nextCharacter(this.selectedCharacter, step)),
     });
     this.observer = new ResizeObserver(() => this.resize());
     this.observer.observe(canvas);
