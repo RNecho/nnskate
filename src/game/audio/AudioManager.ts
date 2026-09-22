@@ -1,7 +1,7 @@
 import type { GameSound } from '../types';
 
 export const MUSIC_TITLE = 'Patinhas ao vento';
-export type MusicMood = 'normal' | 'super' | 'victory';
+export type MusicMood = 'normal' | 'super' | 'victory' | 'defeat';
 const TEMPO = 108;
 const STEP_DURATION = 60 / TEMPO / 4;
 const MASTER_VOLUME = 0.48;
@@ -36,11 +36,21 @@ export class AudioManager {
   private mood: MusicMood = 'normal';
   private duckUntil = 0;
 
-  setMood(mood: MusicMood) { this.mood = mood; }
+  setMood(mood: MusicMood) {
+    if (this.mood === mood) return;
+    this.mood = mood;
+    if (mood === 'defeat') {
+      this.stopMusic();
+      this.stopVoices();
+    } else if (!this.paused) {
+      this.startMusic();
+    }
+  }
 
   resetMusic() {
     this.stopVoices(); this.step = 0; this.duckUntil = 0; this.mood = 'normal';
     this.nextStepTime = (this.context?.currentTime ?? 0) + 0.04;
+    if (!this.paused) this.startMusic();
   }
 
   /** Invoke from a trusted keyboard/pointer gesture; errors belong to the UI. */
@@ -84,6 +94,21 @@ export class AudioManager {
   play(sound: GameSound): void {
     if (!this.context || this.context.state !== 'running' || this.paused || this.muted || this.disposed) return;
     const now = this.context.currentTime;
+    if (sound === 'defeat') {
+      // A small, original minor-key phrase: the last heart fades, then the music rests.
+      this.setMood('defeat');
+      const melody = [77, 75, 72, 68, 67, 65];
+      const starts = [0, 0.38, 0.77, 1.17, 1.66, 2.2];
+      melody.forEach((note, i) => this.bell(note, now + starts[i], i === melody.length - 1 ? 1.05 : 0.58, i === melody.length - 1 ? 0.09 : 0.105));
+      for (const [at, chord, duration] of [
+        [0, [53, 56, 60], 0.9],
+        [1.05, [49, 53, 56], 0.95],
+        [2.14, [53, 56, 60], 1.15],
+      ] as const) {
+        chord.forEach(note => this.tone(frequency(note), now + at, duration, 'triangle', 0.026));
+      }
+      return;
+    }
     if (sound === 'rescue') {
       this.stopVoices(); this.duckUntil = now + 3.2;
       const melody = [72, 77, 81, 84, 81, 84, 86, 89];
@@ -156,7 +181,7 @@ export class AudioManager {
   }
 
   private startMusic(): void {
-    if (this.timer !== null || this.paused || this.disposed || this.context?.state !== 'running') return;
+    if (this.timer !== null || this.paused || this.disposed || this.mood === 'defeat' || this.context?.state !== 'running') return;
     this.nextStepTime = this.context.currentTime + 0.04;
     this.schedule();
     this.timer = setInterval(() => this.schedule(), 25);

@@ -55,13 +55,27 @@ test('flying past a flag cannot save an airborne fall; safe landing activates it
   assert.equal(adventure.checkpoint, 2);
 });
 
+test('the skate descent has no extra checkpoint and a fall returns near the skate station', () => {
+  const { character, adventure } = setup();
+  const x = 1500;
+  character.reset({ x, y: groundAt(RESCUE_LEVEL, x).y });
+  adventure.update(FIXED_STEP, idle);
+  assert.equal(adventure.checkpoint, 1);
+  character.setEquipment('skate');
+  character.reset({ x: 1900, y: RESCUE_LEVEL.height + 90 });
+  adventure.update(FIXED_STEP, idle);
+  assert.equal(character.snapshot.x, 1120);
+  assert.equal(character.snapshot.equipment, 'foot');
+  assert.equal(adventure.health, 4);
+});
+
 test('the skate and patins stations can be reached again on foot from their checkpoints', () => {
   assert.deepEqual(setup().adventure.pickups.filter(p => p.equipment === 'skate').map(p => p.x), [1080]);
-  for (const [index, gear] of [[1, 'skate'], [2, 'skate'], [3, 'patins']] as const) {
+  for (const [index, gear] of [[1, 'skate'], [2, 'patins']] as const) {
     const { character, adventure } = setup(); const x = CHECKPOINTS[index];
     character.reset({ x, y: groundAt(RESCUE_LEVEL, x).y });
     const station = adventure.pickups.filter(p => p.equipment === gear).sort((a, b) => Math.abs(a.x - x) - Math.abs(b.x - x))[0];
-    assert.ok(Math.abs(station.x - x) <= (index === 2 ? 280 : 120));
+    assert.ok(Math.abs(station.x - x) <= 120);
     for (let frame = 0; frame < 180 && character.snapshot.equipment === 'foot'; frame++) {
       adventure.update(FIXED_STEP, { ...idle, axis: station.x > x ? 1 : -1 });
     }

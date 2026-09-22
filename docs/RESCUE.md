@@ -14,6 +14,7 @@ Uma única fase lateral baseada no percurso do MVP, para jogar com Nana ou Nunu.
 
 - Há três bandeiras, tentativas ilimitadas e 1,8 segundo de proteção após receber dano.
 - A partida começa com cinco corações. Contato lateral inválido tira um coração e o equipamento; um ataque correto não tira vida. Trocar de irmã mantém a vida atual.
+- Ao acabar o último coração, a trilha normal para e toca uma melodia triste. Mudo e pausa interrompem o som; recomeçar retoma a trilha da fase.
 - Cinco buracos reais em x=450 (65 px), x=930 (90 px), x=1850 (500 px), x=2840 (70 px) e x=3485 (120 px) interrompem o chão. Cair tira um coração, remove o equipamento e devolve ao último checkpoint a pé, com os corações restantes.
 - Ao zerar os corações, o movimento para e aparece **Recomeçar do início**. Botão, Espaço ou A/✕ reiniciam a fase inteira com cinco corações e progresso zerado. Não há limite de tentativas.
 - A retomada restaura os inimigos que estão à frente do checkpoint. Estrelas, chave e caixas quebradas mantêm seu progresso durante a mesma partida.
@@ -44,8 +45,10 @@ O Canvas exige visão para orientação espacial. A interface conserva foco vis�
 
 ## Checkpoints reposicionados
 
-Existem quatro bandeiras, além do início (x=150): x=1120 perto das caixas, x=1340 no trecho plano antes da descida de skate, x=3075 antes do desafio da chave com patins e x=3890 antes do guardião. A bandeira inteira fica sobre o chão plano. Todos os retornos ficam a mais de 60 pixels das bordas de buracos e fora das patrulhas dos inimigos. O antigo ponto x=2900 ficava dentro do buraco x=2840–2910 e foi removido.
+Existem três bandeiras, além do início (x=150): x=1120 perto das caixas, x=3075 antes do desafio da chave com patins e x=3890 antes do guardião. A bandeira inteira fica sobre o chão plano. Todos os retornos ficam a mais de 60 pixels das bordas de buracos e fora das patrulhas dos inimigos. O ponto x=1340 depois das caixas foi removido; o salto de skate retorna à bandeira x=1120. O antigo ponto x=2900 ficava dentro do buraco x=2840–2910 e também foi removido.
 
-A ativação exige que a personagem esteja apoiada em chão firme. Passar pela bandeira no ar e cair no buraco não altera o retorno salvo. Uma queda devolve a personagem a pé, mantendo o progresso. Há um único skate em x=1080, antes das caixas; do checkpoint na rampa, basta voltar pelo chão para recuperá-lo. Os patins continuam perto do retorno do seu desafio. A seleção e os atalhos ficam restritos a Nana e Nunu (1/2, retrato e LB/RB).
+A ativação exige que a personagem esteja apoiada em chão firme. Passar pela bandeira no ar e cair no buraco não altera o retorno salvo. Uma queda devolve a personagem a pé, mantendo o progresso. Há um único skate em x=1080, perto do primeiro checkpoint, para recuperá-lo depois de cair na rampa. Os patins continuam perto do retorno do seu desafio. A seleção e os atalhos ficam restritos a Nana e Nunu (1/2, retrato e LB/RB).
 
-Validação desta revisão: `npm test` aprovou 52 testes e `npm run build` concluiu sem erros. Na suíte de navegador, 22 testes passaram; o teste de travessia por teclado foi ajustado para saltar perto do segundo buraco e passou em execução isolada. Os resgates completos com Nana e Nunu passaram. Capturas das quatro bandeiras foram inspecionadas. As artes removidas da Juju estão preservadas em `archive/art/juju/` e não fazem parte do carregamento nem do build publicado.
+No primeiro jardim, os dois postes do varal de bandeirinhas ficam apoiados depois do buraco; o gato ilustrado e a dica do monstro foram separados para não se sobreporem.
+
+Validação desta revisão: `npm test` aprovou 53 testes e `npm run build` concluiu sem erros. Na suíte de navegador, 23 testes passaram, incluindo os resgates completos com Nana e Nunu e a nova música de derrota. O teste de controle USB, que avançava até um buraco enquanto ativava o som, foi ajustado e passou isoladamente. Capturas do varal e dos gatos foram inspecionadas. As artes removidas da Juju estão preservadas em `archive/art/juju/` e não fazem parte do carregamento nem do build publicado.

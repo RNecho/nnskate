@@ -38,12 +38,14 @@ test('gamepad controls move, jump, pause and resume once per press; unplugging r
   const state = () => page.evaluate(() => (window as unknown as { __SKATE__: { paused: boolean; character: { x: number; vx: number; state: string; grounded: boolean } } }).__SKATE__);
   await update(1);
   await expect.poll(async () => (await state()).character.vx).toBe(210);
+  await update(0);
+  await expect.poll(async () => (await state()).character.vx).toBe(0);
   await expect(page.locator('#audio-status')).toHaveText('Clique no som para ativar a música');
   // One pointer gesture activates sound; it must not accidentally mute it.
   await page.locator('#sound-button').click();
   await expect(page.locator('#audio-status')).toHaveText('Tocando: Patinhas ao vento');
-  await update(1, true);
-  await expect.poll(async () => (await state()).character.state, { intervals: [16] }).toBe('JUMP');
+  await update(0, true);
+  await expect.poll(async () => (await state()).character.grounded, { intervals: [16] }).toBe(false);
   await update(0, false);
   await expect.poll(async () => (await state()).character.grounded).toBe(true);
   await update(0, false, true);

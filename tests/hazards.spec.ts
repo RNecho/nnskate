@@ -7,6 +7,19 @@ test('five visible hearts track mistakes, survive sister switching and refill on
   await page.goto('/');
   await page.locator('#art-loading').waitFor({ state: 'hidden' });
   await expect(page.locator('[data-heart]:not(.empty)')).toHaveCount(5);
+  await page.evaluate(async () => {
+    const path = performance.getEntriesByType('resource').map(entry => entry.name)
+      .find(url => new URL(url).pathname === '/src/game/audio/AudioManager.ts');
+    if (!path) throw new Error('The game did not load its audio module.');
+    const { AudioManager } = await import(/* @vite-ignore */ path);
+    const original = AudioManager.prototype.play;
+    const tally = window as unknown as { __defeatCueCount: number };
+    tally.__defeatCueCount = 0;
+    AudioManager.prototype.play = function (sound: string) {
+      if (sound === 'defeat') tally.__defeatCueCount++;
+      original.call(this, sound);
+    };
+  });
   await page.locator('#begin-button').click();
   await page.clock.install();
   await page.keyboard.down('ArrowRight');
@@ -33,6 +46,8 @@ test('five visible hearts track mistakes, survive sister switching and refill on
   await expect(page.locator('[data-heart].empty')).toHaveCount(5);
   await expect(page.locator('#defeat-panel')).toBeVisible();
   await expect(page.locator('#retry-checkpoint')).toBeFocused();
+  await page.clock.runFor(600);
+  expect(await page.evaluate(() => (window as unknown as { __defeatCueCount: number }).__defeatCueCount)).toBe(1);
   await page.locator('#game-shell').screenshot({ path: 'test-results/mobile-defeat.png' });
   await page.locator('#retry-checkpoint').click();
   await page.clock.runFor(140);

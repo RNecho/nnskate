@@ -8,11 +8,11 @@ Jogo de plataforma em 2D com uma fase de resgate: **Operação Patinhas**. Nunu 
 
 Clique em **Vamos buscar!** ou mova a personagem. Caia na cabeça dos monstros para derrotá-los. O skate quebra as caixas ao acelerar e derruba monstros comuns em alta velocidade. Na descida, ganhe embalo e pule na faixa dourada da rampa para atravessar o vão. **No ar de skate, dê dois novos toques em ↑ para girar 360°**; Espaço, W e o botão de pulo do celular/controle também funcionam. Os patins liberam um segundo pulo: solte e aperte pular novamente no ar para coletar a chave dourada. Os mesmos poderes funcionam com as duas personagens.
 
-A personagem tem **cinco corações**. Encostar de lado num monstro tira um coração e o equipamento; acertar a cabeça ou atacar com skate em alta velocidade é seguro. Há 1,8 segundo de proteção após o dano. **Skate e patins permanecem disponíveis nos pontos de coleta**: saia e volte para pegar o poder novamente.
+A personagem tem **cinco corações**. Encostar de lado num monstro tira um coração e o equipamento; acertar a cabeça ou atacar com skate em alta velocidade é seguro. Há 1,8 segundo de proteção após o dano. **Skate e patins permanecem disponíveis nos pontos de coleta**: saia e volte para pegar o poder novamente. Ao perder o último coração, a música da fase para e toca uma melodia triste de derrota.
 
 Há **cinco buracos** no chão. Cair custa um coração, remove o equipamento e retorna ao checkpoint **a pé**. Quando os cinco corações acabam, **Recomeçar do início** (ou o botão de pulo) reinicia a fase inteira com cinco corações, a pé, limpando o progresso da tentativa. Skate e patins podem ser coletados novamente. O guardião final recebe três pulos separados na cabeça; com a chave coletada, aproxime-se da gaiola para resgatar o cachorrinho e assistir ao reencontro. **Jogar de novo** reinicia a aventura com a personagem selecionada.
 
-As 12 estrelas são opcionais para o resgate. Coletar todas concede **Superbrilho por 8 segundos**: a personagem brilha e derrota monstros por contato, com música especial e contador. O guardião mantém três acertos; buracos ainda custam um coração e encerram o poder. A recompensa acontece uma vez por partida. Existem quatro checkpoints, dois tipos de monstros comuns e um guardião. Não há persistência: recarregar a página começa uma nova partida. Mais detalhes técnicos e de validação em [docs/RESCUE.md](docs/RESCUE.md).
+As 12 estrelas são opcionais para o resgate. Coletar todas concede **Superbrilho por 8 segundos**: a personagem brilha e derrota monstros por contato, com música especial e contador. O guardião mantém três acertos; buracos ainda custam um coração e encerram o poder. A recompensa acontece uma vez por partida. Existem três checkpoints, dois tipos de monstros comuns e um guardião. Não há persistência: recarregar a página começa uma nova partida. Mais detalhes técnicos e de validação em [docs/RESCUE.md](docs/RESCUE.md).
 
 ## Abrir o jogo
 
@@ -66,7 +66,7 @@ A troca funciona durante a aventura ou a pausa e mantém posição, velocidade, 
 
 O **segundo pulo de patins faz um giro de ponta-cabeça** automaticamente, com oito poses próprias para Nana e Nunu. As animações preservam as silhuetas inteiras, sem recortes de poses vizinhas. O chão, as rampas e as plataformas usam terra com pedras e raízes; as bandeiras têm tecido animado e a gaiola abre após obter a chave e vencer o guardião.
 
-Os quatro checkpoints ficam em chão plano: perto das caixas, antes da descida de skate, perto do desafio dos patins e antes do guardião. São ativados ao pousar em chão firme; cair antes disso mantém o ponto de retorno anterior. Os equipamentos continuam acessíveis a pé. Detalhes em [docs/RESCUE.md](docs/RESCUE.md).
+Os três checkpoints ficam em chão plano: perto das caixas, perto do desafio dos patins e antes do guardião. São ativados ao pousar em chão firme; cair antes disso mantém o ponto de retorno anterior. O salto de skate retorna à bandeira antes das caixas, perto do skate. Os equipamentos continuam acessíveis a pé. Detalhes em [docs/RESCUE.md](docs/RESCUE.md).
 
 ### Controle USB
 
@@ -149,7 +149,7 @@ O atlas original da Nunu foi copiado diretamente da imagem enviada pelo usuário
 
 A atualização atual adiciona caminhada alternada da Nunu, repouso com piscadas, saltos confiantes da Nana, manobra 360° e terreno com terra, pedras arredondadas e raízes. Novas folhas, prompts e controles estão em [docs/RAMP-MOTION-V4.md](docs/RAMP-MOTION-V4.md).
 
-O áudio usa Web Audio: a nova trilha original **Patinhas ao vento**, sons de equipamento, chave e caixas, música de Superbrilho e uma fanfarra exclusiva no reencontro com o cachorro, além dos efeitos de movimento. Não há downloads de música nem arquivos temporários ausentes. Artes, prompts e regras desta atualização estão em [docs/POWER-POLISH.md](docs/POWER-POLISH.md).
+O áudio usa Web Audio: a trilha original **Patinhas ao vento**, sons de equipamento, chave e caixas, música de Superbrilho, uma melodia triste de derrota e uma fanfarra exclusiva no reencontro com o cachorro, além dos efeitos de movimento. Não há downloads de música nem arquivos temporários ausentes. Artes, prompts e regras desta atualização estão em [docs/POWER-POLISH.md](docs/POWER-POLISH.md).
 
 ## Verificar
 

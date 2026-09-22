@@ -83,3 +83,45 @@ test('rescue fanfare produces a complete unclipped waveform and respects mute an
   expect(results[1].peak).toBe(0);
   expect(results[2].peak).toBe(0);
 });
+
+test('game-over melody fades to silence and respects mute and pause', async ({ page }) => {
+  await page.goto('/');
+  const results = await page.evaluate(async () => {
+    const path = '/src/game/audio/AudioManager.ts';
+    const { AudioManager } = await import(/* @vite-ignore */ path);
+    const OriginalContext = window.AudioContext;
+    const results = [];
+    for (const mode of ['audible', 'muted', 'paused']) {
+      const ctx = new OfflineAudioContext(1, 44100 * 4, 44100);
+      Object.defineProperty(ctx, 'state', { get: () => 'running' });
+      Object.defineProperty(ctx, 'resume', { value: async () => {} });
+      Object.defineProperty(ctx, 'close', { value: async () => {} });
+      window.AudioContext = function () { return ctx; } as unknown as typeof AudioContext;
+      const audio = new AudioManager();
+      await audio.unlock();
+      if (mode === 'muted') audio.setMuted(true);
+      if (mode === 'paused') audio.setPaused(true);
+      audio.setMood('defeat');
+      audio.play('defeat');
+      const buffer = await ctx.startRendering();
+      audio.dispose();
+      const samples = buffer.getChannelData(0);
+      let peak = 0, phraseEnergy = 0, endingEnergy = 0, afterEnergy = 0;
+      samples.forEach((sample: number, i: number) => {
+        peak = Math.max(peak, Math.abs(sample));
+        if (i >= 44100 * 0.1 && i < 44100 * 0.7) phraseEnergy += sample * sample;
+        if (i >= 44100 * 2.4 && i < 44100 * 3.2) endingEnergy += sample * sample;
+        if (i >= 44100 * 3.5) afterEnergy += sample * sample;
+      });
+      results.push({ mode, peak, phraseEnergy, endingEnergy, afterEnergy });
+    }
+    window.AudioContext = OriginalContext;
+    return results;
+  });
+  expect(results[0].phraseEnergy).toBeGreaterThan(0.01);
+  expect(results[0].endingEnergy).toBeGreaterThan(0.01);
+  expect(results[0].peak).toBeLessThan(0.95);
+  expect(results[0].afterEnergy).toBe(0);
+  expect(results[1].peak).toBe(0);
+  expect(results[2].peak).toBe(0);
+});

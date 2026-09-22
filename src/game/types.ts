@@ -1,5 +1,5 @@
 export type CharacterState = 'IDLE' | 'PUSH' | 'ROLL' | 'JUMP' | 'FALL' | 'LAND';
-export type GameSound = 'jump' | 'land' | 'push' | 'pickup' | 'powerup' | 'key' | 'break' | 'super' | 'rescue' | 'stomp' | 'hurt' | 'checkpoint' | 'win' | 'trick';
+export type GameSound = 'jump' | 'land' | 'push' | 'pickup' | 'powerup' | 'key' | 'break' | 'super' | 'rescue' | 'defeat' | 'stomp' | 'hurt' | 'checkpoint' | 'win' | 'trick';
 export type Equipment = 'foot' | 'skate' | 'patins';
 
 export interface PhysicsConfig {

@@ -157,13 +157,18 @@ export class Game {
         const input = this.input.sample();
         if (this.adventure.phase === 'defeated' && input.jumpPressed) this.retryCheckpoint();
         if (input.axis || input.jumpPressed) this.adventure.start();
+        const wasDefeated = this.adventure.phase === 'defeated';
         this.adventure.update(FIXED_STEP, input);
+        if (!wasDefeated && this.adventure.phase === 'defeated') {
+          this.audio.setMood('defeat');
+          this.audio.play('defeat');
+        }
         this.camera.update(FIXED_STEP, this.character.snapshot);
         this.accumulator -= FIXED_STEP;
         this.time += FIXED_STEP;
       }
     }
-    this.audio.setMood(this.adventure.superTime > 0 ? 'super' : this.adventure.phase === 'reunion' || this.adventure.phase === 'won' ? 'victory' : 'normal');
+    this.audio.setMood(this.adventure.phase === 'defeated' ? 'defeat' : this.adventure.superTime > 0 ? 'super' : this.adventure.phase === 'reunion' || this.adventure.phase === 'won' ? 'victory' : 'normal');
     this.renderer.render(this.character.snapshot, this.camera.snapshot, this.time, this.selectedCharacter, this.adventure);
     this.uiElapsed += dt;
     if (this.uiElapsed > 0.08) {

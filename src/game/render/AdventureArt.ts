@@ -171,7 +171,7 @@ export class AdventureArt {
       this.rect(x - 5, y, 10, 8, '#f8caa5');
       for (const dx of [-9, -2, 5]) this.rect(x + dx, y - 7, 5, 5, '#f8caa5');
     }
-    this.label(640, 214, 'PULE NA CABEÇA!');
+    this.label(790, 214, 'PULE NA CABEÇA!');
     this.label(410, 259, 'CUIDADO! PULE!');
     this.label(3420, 132, 'PULE DE NOVO NO AR');
     for (const enemy of adventure.enemies) this.monster(enemy, time);

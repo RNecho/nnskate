@@ -15,9 +15,9 @@ export const RESCUE_KEY = { x: 3140, y: 135 };
 export const SUPER_DURATION = 8;
 export const MAX_HEALTH = 5;
 export const COMPANION_OFFSET = 64;
-// Solid, level resting spots: crates, skate run, roller-skate challenge, guardian.
+// Solid, level resting spots: crates, roller-skate challenge, guardian.
 // Gear stations remain reachable on foot after losing equipment in a fall.
-export const CHECKPOINTS = [150, 1120, 1340, 3075, 3890];
+export const CHECKPOINTS = [150, 1120, 3075, 3890];
 export const POWER_LABELS: Record<Equipment, string> = {
   foot: 'A pé', skate: 'Skate · supervelocidade', patins: 'Patins · pulo duplo',
 };

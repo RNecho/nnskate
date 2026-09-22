@@ -255,24 +255,39 @@ export class Renderer {
   }
 
   private cat(x: number, y: number, time: number): void {
-    this.rect(x-15,y-5,30,5,'#287155');
-    this.rect(x-13,y-20,26,17,'#2f2c40'); this.rect(x-9,y-30,21,16,'#2f2c40');
-    this.rect(x-11,y-18,21,13,'#696a85'); this.rect(x-7,y-28,17,13,'#696a85');
-    this.polygon([[x-9,y-27],[x-10,y-39],[x,y-31]],'#2f2c40');
-    this.polygon([[x+2,y-31],[x+12,y-38],[x+12,y-26]],'#2f2c40');
-    this.rect(x-7,y-33,3,5,'#ff8eb3'); this.rect(x+7,y-33,3,5,'#ff8eb3');
-    this.rect(x-3,y-29,5,6,'#a5a4bb');
-    this.rect(x-7,y-23,15,9,'#fff7e7'); this.rect(x-4,y-16,12,11,'#fff7e7');
-    this.rect(x-6,y-10,4,6,'#cad4dc'); this.rect(x+7,y-13,2,8,'#c1bdcb');
-    this.rect(x-7,y-5,6,3,'#fff7e7'); this.rect(x+5,y-5,6,3,'#fff7e7');
-    this.rect(x-5,y-25,3,3,'#29263a'); this.rect(x+5,y-25,3,3,'#29263a');
-    this.rect(x-5,y-25,1,1,'#fffdf4'); this.rect(x+5,y-25,1,1,'#fffdf4');
-    this.rect(x,y-21,3,2,'#f389a6'); this.rect(x-2,y-18,6,1,'#524455');
-    this.rect(x-11,y-21,5,1,'#cad4dc'); this.rect(x+8,y-21,5,1,'#cad4dc');
-    const sway = Math.round(Math.sin(time*2)*2);
-    this.rect(x+12,y-14,8,5,'#2f2c40'); this.rect(x+17,y-22+sway,5,11-sway,'#2f2c40');
-    this.rect(x+17,y-21+sway,3,8-sway,'#696a85');
-    this.rect(x+17,y-25+sway,5,5,'#f5eddd');
+    const c = this.ctx;
+    c.save(); c.translate(Math.round(x), Math.round(y)); c.lineJoin = 'round'; c.lineCap = 'round';
+    c.fillStyle = '#354e4833'; c.beginPath(); c.ellipse(1, 1, 19, 3, 0, 0, Math.PI * 2); c.fill();
+    const sway = Math.sin(time * 2) * 3;
+    c.beginPath(); c.moveTo(10, -11); c.bezierCurveTo(23, -9, 24, -20, 18, -23 + sway);
+    c.strokeStyle = '#423749'; c.lineWidth = 8; c.stroke();
+    c.strokeStyle = '#9b94a7'; c.lineWidth = 4; c.stroke();
+    const fur = c.createLinearGradient(-11, -44, 11, -2);
+    fur.addColorStop(0, '#aaa5bb'); fur.addColorStop(0.55, '#77728e'); fur.addColorStop(1, '#50475f');
+    c.fillStyle = fur; c.strokeStyle = '#423749'; c.lineWidth = 2;
+    c.beginPath(); c.ellipse(-2, -15, 14, 16, -0.1, 0, Math.PI * 2); c.fill(); c.stroke();
+    for (const side of [-1, 1]) {
+      c.beginPath(); c.moveTo(side * 5, -38); c.lineTo(side * 12, -49); c.lineTo(side * 15, -31); c.closePath(); c.fill(); c.stroke();
+      c.fillStyle = '#e6a5bd'; c.beginPath(); c.moveTo(side * 9, -39); c.lineTo(side * 12, -45); c.lineTo(side * 13, -36); c.closePath(); c.fill(); c.fillStyle = fur;
+    }
+    c.beginPath(); c.ellipse(0, -31, 15, 13, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+    c.fillStyle = '#fff0dd'; c.beginPath(); c.ellipse(0, -24, 9, 7, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#fff7e9';
+    for (const px of [-9, 8]) { c.beginPath(); c.ellipse(px, -3, 5, 3, 0, 0, Math.PI * 2); c.fill(); }
+    const blink = Math.sin(time * 1.7 + x) > 0.995;
+    c.strokeStyle = '#343044'; c.fillStyle = '#343044'; c.lineWidth = 1.5;
+    for (const px of [-6, 6]) {
+      c.beginPath();
+      if (blink) { c.moveTo(px - 2, -32); c.quadraticCurveTo(px, -30, px + 2, -32); c.stroke(); }
+      else { c.ellipse(px, -32, 2, 2.7, 0, 0, Math.PI * 2); c.fill(); c.fillStyle = '#fff'; c.fillRect(px, -33, 1, 1); c.fillStyle = '#343044'; }
+    }
+    c.fillStyle = '#dd829f'; c.beginPath(); c.moveTo(-3, -25); c.lineTo(3, -25); c.lineTo(0, -22); c.closePath(); c.fill();
+    c.strokeStyle = '#6c5367'; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(0, -22); c.lineTo(0, -20); c.quadraticCurveTo(-3, -18, -5, -20); c.moveTo(0, -20); c.quadraticCurveTo(3, -18, 5, -20);
+    for (const side of [-1, 1]) for (const dy of [-1, 2]) { c.moveTo(side * 8, -23 + dy); c.lineTo(side * 17, -25 + dy * 2); }
+    c.stroke();
+    c.fillStyle = '#e8c870'; c.beginPath(); c.arc(0, -17, 2.5, 0, Math.PI * 2); c.fill();
+    c.restore();
   }
 
   private decorations(camera: CameraSnapshot, time: number): void {
@@ -280,18 +295,25 @@ export class Renderer {
     // Large trees and foliage are now part of the illustrated panorama.
     this.sign(330,370);
     this.sign(2730,370);
-    this.cat(748,groundAt(this.level,748).y,time);
-    this.cat(2380,groundAt(this.level,2380).y,time+2);
+    this.cat(610,groundAt(this.level,610).y,time);
+    this.cat(2480,groundAt(this.level,2480).y,time+2);
 
-    // Bunting belongs to the little park, beyond the skateable surface.
-    const bx=496, by=207;
-    this.rect(bx,by,4,109,'#553b5c'); this.rect(bx+1,by,2,109,'#a88ca7');
-    this.rect(bx+203,by+6,4,103,'#553b5c'); this.rect(bx+204,by+6,2,103,'#a88ca7');
-    for(let i=0;i<101;i++) this.rect(bx+i*2,by+Math.round(Math.sin(i/100*Math.PI)*15),3,2,'#534b72');
-    for(let i=0;i<7;i++) {
-      const x=bx+10+i*28, y=by+Math.round(Math.sin((x-bx)/200*Math.PI)*15);
-      this.polygon([[x,y],[x+18,y+2],[x+9,y+19]],['#fb62b3','#ffe05b','#39d6ba'][i%3]);
-      this.rect(x+3,y+3,9,3,['#ffb5d5','#fff3a4','#a1f1d4'][i%3]);
+    // Both bunting posts are planted beyond the first hole, beside the cat.
+    const left = 550, right = 680, leftGround = groundAt(this.level, left).y, rightGround = groundAt(this.level, right).y;
+    const leftTop = leftGround - 106, rightTop = rightGround - 106;
+    for (const [px, ground] of [[left, leftGround], [right, rightGround]]) {
+      this.rect(px - 3, ground - 106, 7, 106, '#553b5c');
+      this.rect(px - 1, ground - 104, 3, 103, '#b998a6');
+      this.rect(px - 5, ground - 109, 11, 5, '#e7be79');
+    }
+    this.ctx.strokeStyle = '#534b72'; this.ctx.lineWidth = 2;
+    this.ctx.beginPath(); this.ctx.moveTo(left, leftTop + 3);
+    this.ctx.quadraticCurveTo((left + right) / 2, Math.max(leftTop, rightTop) + 22, right, rightTop + 3); this.ctx.stroke();
+    for (let i = 0; i < 5; i++) {
+      const t = (i + 0.6) / 5, px = left + (right - left) * t;
+      const py = leftTop * (1 - t) + rightTop * t + Math.sin(t * Math.PI) * 11 + 2;
+      this.polygon([[px - 7, py], [px + 7, py], [px, py + 17]], ['#fb62b3', '#ffe05b', '#39d6ba'][i % 3]);
+      this.rect(px - 4, py + 3, 8, 2, ['#ffb5d5', '#fff3a4', '#a1f1d4'][i % 3]);
     }
     this.star(397,205,0.75,'#ffeb53'); this.star(675,144,0.55,'#fff18e');
     this.heart(454,148,2,'#ff89bb');
