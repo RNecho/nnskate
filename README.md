@@ -2,6 +2,8 @@
 
 Jogo de plataforma em 2D com uma fase de resgate: **Operação Patinhas**. Nunu e Nana começam a pé, encontram skate e patins como poderes, enfrentam monstros e salvam um cachorrinho. Uma personagem fica ativa por vez; a troca preserva o progresso. O percurso do MVP agora tem um jardim ilustrado, monstros com cara de vilão, cachorro animado e uma área de jogo maior.
 
+**Jogar online:** [Nunu & Nana · Operação Patinhas](https://rnecho.github.io/nnskate/). Cada atualização da branch `main` é publicada pelo workflow de GitHub Pages.
+
 ## A aventura
 
 Clique em **Vamos buscar!** ou mova a personagem. Caia na cabeça dos monstros para derrotá-los. O skate quebra as caixas ao acelerar e derruba monstros comuns em alta velocidade. Na descida, ganhe embalo e pule na faixa dourada da rampa para atravessar o vão. **No ar de skate, dê dois novos toques em ↑ para girar 360°**; Espaço, W e o botão de pulo do celular/controle também funcionam. Os patins liberam um segundo pulo: solte e aperte pular novamente no ar para coletar a chave dourada. Os mesmos poderes funcionam com as duas personagens.
