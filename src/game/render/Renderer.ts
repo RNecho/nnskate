@@ -3,7 +3,7 @@ import { drawCharacter } from '../character/Animation';
 import type { CharacterId } from '../character/characters';
 import { gapAt, groundAt } from '../level/Level';
 import type { CameraSnapshot, CharacterSnapshot, LevelData } from '../types';
-import { artAssets } from './ArtAssets';
+import { artAssets, catFrames } from './ArtAssets';
 import { AdventureArt } from './AdventureArt';
 import { drawPowerAura } from './ItemArt';
 import type { Adventure } from '../adventure/Adventure';
@@ -258,6 +258,30 @@ export class Renderer {
     const c = this.ctx;
     c.save(); c.translate(Math.round(x), Math.round(y)); c.lineJoin = 'round'; c.lineCap = 'round';
     c.fillStyle = '#354e4833'; c.beginPath(); c.ellipse(1, 1, 19, 3, 0, 0, Math.PI * 2); c.fill();
+    const atlas = artAssets.cat;
+    if (atlas && catFrames.length === 8) {
+      // The isolated 384 × 512 cells share a baseline 32 px above their lower edge.
+      // A fixed scale keeps the kitten's size steady while its tail and paw move.
+      const poses: readonly [number, number][] = [
+        [0, 0.7], [2, 0.25], [0, 0.55], [3, 0.25], [0, 0.9],
+        [1, 0.16], [0, 0.7], [4, 0.32], [5, 0.35], [6, 0.45],
+        [7, 0.35], [0, 0.4],
+      ];
+      const cycle = poses.reduce((sum, [, duration]) => sum + duration, 0);
+      let elapsed = ((time % cycle) + cycle) % cycle;
+      let pose = 0;
+      for (const [index, duration] of poses) {
+        pose = index;
+        if (elapsed < duration) break;
+        elapsed -= duration;
+      }
+      const scale = 0.145;
+      c.drawImage(atlas, pose % 4 * 384, Math.floor(pose / 4) * 512, 384, 512,
+        -192 * scale, -480 * scale, 384 * scale, 512 * scale);
+      c.restore();
+      return;
+    }
+    // Preserve the hand-drawn cat if the optional sheet cannot be loaded.
     const sway = Math.sin(time * 2) * 3;
     c.beginPath(); c.moveTo(10, -11); c.bezierCurveTo(23, -9, 24, -20, 18, -23 + sway);
     c.strokeStyle = '#423749'; c.lineWidth = 8; c.stroke();

@@ -10,6 +10,7 @@ export const artAssets: {
   nunuFoot: HTMLCanvasElement | null;
   monsters: HTMLCanvasElement | null;
   puppy: HTMLCanvasElement | null;
+  cat: HTMLCanvasElement | null;
   nunuSkate: HTMLCanvasElement | null;
   nanaPatins: HTMLCanvasElement | null;
   nunuMotion: HTMLCanvasElement | null;
@@ -17,12 +18,13 @@ export const artAssets: {
   tricks: HTMLCanvasElement | null;
   nunuFlip: HTMLCanvasElement | null;
   nanaFlip: HTMLCanvasElement | null;
-} = { background: null, terrain: null, nana: null, nunu: null, nanaFoot: null, nunuFoot: null, monsters: null, puppy: null, nunuSkate: null, nanaPatins: null, nunuMotion: null, nanaMotion: null, tricks: null,
+} = { background: null, terrain: null, nana: null, nunu: null, nanaFoot: null, nunuFoot: null, monsters: null, puppy: null, cat: null, nunuSkate: null, nanaPatins: null, nunuMotion: null, nanaMotion: null, tricks: null,
   nunuFlip: null, nanaFlip: null };
 
 export interface MonsterFrame { x: number; y: number; width: number; height: number }
 export const monsterFrames: MonsterFrame[][] = [];
 export const puppyFrames: MonsterFrame[] = [];
+export const catFrames: MonsterFrame[] = [];
 export interface RidingFrame extends MonsterFrame { pivotX: number }
 export const ridingFrames: Record<'nunuSkate' | 'nanaPatins', RidingFrame[]> = { nunuSkate: [], nanaPatins: [] };
 export const motionFrames: Record<'nunuMotion' | 'nanaMotion', MonsterFrame[]> = { nunuMotion: [], nanaMotion: [] };
@@ -105,10 +107,11 @@ function prepareAtlas(image: HTMLImageElement): HTMLCanvasElement {
 }
 
 export function loadArtAssets(): Promise<void> {
-  if (Object.values(artAssets).every(Boolean)) return Promise.resolve();
+  // The cat is scenery; a missing or malformed optional sheet keeps the drawn cat.
+  if (Object.entries(artAssets).every(([key, asset]) => key === 'cat' || Boolean(asset))) return Promise.resolve();
   if (pending) return pending;
-  pending = Promise.all([loadImage('dream-garden-v2.png'), loadImage('nana-sprites-keyed.png'), loadImage('nunu-sprites-keyed.png'), loadImage('nana-foot-v2.png'), loadImage('nunu-foot-v2.png'), loadImage('monsters-v2.png'), loadImage('puppy-v2.png'), loadImage('nunu-skate-v3.png'), loadImage('nana-patins-v3.png'), loadImage('nunu-motion-v4.png'), loadImage('nana-motion-v4.png'), loadImage('skate-360-v4.png'), loadImage('nunu-flip-v1.png'), loadImage('nana-flip-v1.png'), loadImage('terrain-earth-v5.png')])
-    .then(([background, nana, nunu, nanaFoot, nunuFoot, monsters, puppy, nunuSkate, nanaPatins, nunuMotion, nanaMotion, tricks, nunuFlip, nanaFlip, terrain]) => {
+  pending = Promise.all([loadImage('dream-garden-v2.png'), loadImage('nana-sprites-keyed.png'), loadImage('nunu-sprites-keyed.png'), loadImage('nana-foot-v2.png'), loadImage('nunu-foot-v2.png'), loadImage('monsters-v2.png'), loadImage('puppy-v2.png'), loadImage('nunu-skate-v3.png'), loadImage('nana-patins-v3.png'), loadImage('nunu-motion-v4.png'), loadImage('nana-motion-v4.png'), loadImage('skate-360-v4.png'), loadImage('nunu-flip-v1.png'), loadImage('nana-flip-v1.png'), loadImage('terrain-earth-v5.png'), loadImage('cat-v1.png').catch(() => null)])
+    .then(([background, nana, nunu, nanaFoot, nunuFoot, monsters, puppy, nunuSkate, nanaPatins, nunuMotion, nanaMotion, tricks, nunuFlip, nanaFlip, terrain, cat]) => {
       const nanaAtlas = prepareAtlas(nana);
       const nunuAtlas = prepareAtlas(nunu);
       artAssets.background = background;
@@ -123,6 +126,23 @@ export function loadArtAssets(): Promise<void> {
       const puppyAtlas = prepareAtlas(puppy);
       puppyFrames.splice(0, puppyFrames.length, ...prepareFrames(puppyAtlas, 2, [0, 512, 1024]).flat());
       artAssets.puppy = puppyAtlas;
+      if (cat) {
+        try {
+          // Each pose is separated before cropping so ears, whiskers and the tail
+          // never borrow opaque pixels from the next cell.
+          const atlas = isolateSpriteAtlas(prepareAtlas(cat), 2);
+          const frames = prepareFrames(atlas, 4, [0, 512, 1024], 8).flat();
+          if (frames.length !== 8 || frames.some(frame => frame.width < 100 || frame.height < 100)) {
+            throw new Error('Pose incompleta no atlas do gato.');
+          }
+          catFrames.splice(0, catFrames.length, ...frames);
+          artAssets.cat = atlas;
+        } catch (error) {
+          console.warn('Não foi possível preparar o gato ilustrado:', error);
+          catFrames.splice(0);
+          artAssets.cat = null;
+        }
+      }
       for (const [id, key, source] of [['nunu', 'nunuFlip', nunuFlip], ['nana', 'nanaFlip', nanaFlip]] as const) {
         artAssets[key] = isolateSpriteAtlas(prepareAtlas(source), 2, true);
         flipFrames[id] = prepareFrames(artAssets[key], 4, [0, 512, 1024], 8).flat();
