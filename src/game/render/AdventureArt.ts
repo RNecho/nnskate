@@ -166,7 +166,7 @@ export class AdventureArt {
       const x = CHECKPOINTS[i], y = groundAt(adventure.level, x).y;
       drawCheckpoint(c, x, y, i <= adventure.checkpoint, time);
     }
-    for (const x of [440, 810, 1750, 2260, 2900, 3390]) {
+    for (const x of [440, 810, 1750, 3390]) {
       const y = groundAt(adventure.level, x).y + 45;
       this.rect(x - 5, y, 10, 8, '#f8caa5');
       for (const dx of [-9, -2, 5]) this.rect(x + dx, y - 7, 5, 5, '#f8caa5');

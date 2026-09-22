@@ -13,11 +13,16 @@ function setup() {
   return { character, adventure };
 }
 
-test('every checkpoint stands on flat ground, clear of hole edges and enemy patrols', () => {
+test('every checkpoint flag fits on flat ground, clear of hole edges and enemy patrols', () => {
   const { adventure } = setup();
   for (const x of CHECKPOINTS) {
     assert.equal(gapAt(RESCUE_LEVEL, x), undefined);
     assert.equal(groundAt(RESCUE_LEVEL, x).angle, 0);
+    // The fabric extends 56 px to the right of the pole, so the whole flag needs support.
+    for (const edge of [x - 15, x + 56]) {
+      assert.equal(gapAt(RESCUE_LEVEL, edge), undefined);
+      assert.equal(groundAt(RESCUE_LEVEL, edge).y, groundAt(RESCUE_LEVEL, x).y);
+    }
     for (const gap of RESCUE_LEVEL.gaps!) assert.ok(x < gap.x - 60 || x > gap.x + gap.width + 60);
     for (const enemy of adventure.enemies) assert.ok(Math.abs(x - enemy.home) > enemy.range + 75);
   }
@@ -51,12 +56,13 @@ test('flying past a flag cannot save an airborne fall; safe landing activates it
 });
 
 test('the skate and patins stations can be reached again on foot from their checkpoints', () => {
+  assert.deepEqual(setup().adventure.pickups.filter(p => p.equipment === 'skate').map(p => p.x), [1080]);
   for (const [index, gear] of [[1, 'skate'], [2, 'skate'], [3, 'patins']] as const) {
     const { character, adventure } = setup(); const x = CHECKPOINTS[index];
     character.reset({ x, y: groundAt(RESCUE_LEVEL, x).y });
     const station = adventure.pickups.filter(p => p.equipment === gear).sort((a, b) => Math.abs(a.x - x) - Math.abs(b.x - x))[0];
-    assert.ok(Math.abs(station.x - x) <= 100);
-    for (let frame = 0; frame < 90 && character.snapshot.equipment === 'foot'; frame++) {
+    assert.ok(Math.abs(station.x - x) <= (index === 2 ? 280 : 120));
+    for (let frame = 0; frame < 180 && character.snapshot.equipment === 'foot'; frame++) {
       adventure.update(FIXED_STEP, { ...idle, axis: station.x > x ? 1 : -1 });
     }
     assert.equal(character.snapshot.equipment, gear); assert.equal(adventure.health, 5);

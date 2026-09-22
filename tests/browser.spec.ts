@@ -73,14 +73,17 @@ test('keyboard skating traverses the hill, follows the camera and returns left',
   await page.keyboard.down('Space');
   await expect.poll(async () => (await snapshot(page)).character.x, { timeout: 6000 }).toBeGreaterThan(540);
   await page.keyboard.up('Space');
-  await expect.poll(async () => (await snapshot(page)).character.x, { intervals: [16] }).toBeGreaterThan(555);
+  // The next hole starts at x=930. Wait until the first jump has landed,
+  // then jump close enough to the lip to clear it reliably.
+  await expect.poll(async () => (await snapshot(page)).character.x, { intervals: [16] }).toBeGreaterThan(875);
+  await expect.poll(async () => (await snapshot(page)).character.grounded, { intervals: [16] }).toBe(true);
   await page.keyboard.down('Space');
-  await expect.poll(async () => (await snapshot(page)).character.x, { timeout: 6000 }).toBeGreaterThan(900);
+  await expect.poll(async () => (await snapshot(page)).character.x, { timeout: 6000 }).toBeGreaterThan(1030);
   await page.keyboard.up('Space');
   await page.keyboard.up('ArrowRight');
   const right = await snapshot(page);
   expect(right.camera.x).toBeGreaterThan(400);
-  expect(right.character.x).toBeGreaterThan(900);
+  expect(right.character.x).toBeGreaterThan(1030);
   await page.keyboard.down('ArrowLeft');
   await expect.poll(async () => (await snapshot(page)).character.facing).toBe(-1);
   await page.keyboard.up('ArrowLeft');

@@ -17,7 +17,7 @@ export const MAX_HEALTH = 5;
 export const COMPANION_OFFSET = 64;
 // Solid, level resting spots: crates, skate run, roller-skate challenge, guardian.
 // Gear stations remain reachable on foot after losing equipment in a fall.
-export const CHECKPOINTS = [150, 1120, 1390, 3060, 3890];
+export const CHECKPOINTS = [150, 1120, 1340, 3075, 3890];
 export const POWER_LABELS: Record<Equipment, string> = {
   foot: 'A pé', skate: 'Skate · supervelocidade', patins: 'Patins · pulo duplo',
 };
@@ -93,11 +93,10 @@ export class Adventure {
     ];
     this.pickups = [
       { x: 1080, y: groundAt(this.level, 1080).y - 44, equipment: 'skate', taken: false, touching: false },
-      { x: 1450, y: groundAt(this.level, 1450).y - 44, equipment: 'skate', taken: false, touching: false },
       { x: 2970, y: groundAt(this.level, 2970).y - 44, equipment: 'patins', taken: false, touching: false },
     ];
     this.sparks = [
-      [390, 320], [570, 267], [840, 255], [1220, 300], [1350, 244],
+      [390, 320], [570, 267], [840, 255], [1220, 300], [1450, 285],
       [2060, 166], [2650, 316], [3200, 235], [3390, 170], [3480, 170],
       [3680, 227], [3870, 320],
     ].map(([x, y]) => ({ x, y, taken: false }));
